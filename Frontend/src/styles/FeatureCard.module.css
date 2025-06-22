@@ -1,0 +1,25 @@
+.card {
+  background-color: white;
+  padding: 2rem;
+  border-radius: 0.75rem;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+  text-align: center;
+}
+
+.icon {
+  font-size: 2rem;
+  margin-bottom: 1rem;
+  color: #10b981;
+}
+
+h3 {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #111827;
+}
+
+p {
+  margin-top: 0.5rem;
+  color: #6b7280;
+  font-size: 0.95rem;
+}

@@ -1,0 +1,38 @@
+.hero {
+  background-color: #f3f4f6;
+  padding: 6rem 1rem;
+  text-align: center;
+}
+
+.container {
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+h1 {
+  font-size: 3rem;
+  font-weight: 800;
+  color: #1f2937;
+}
+
+p {
+  margin-top: 1rem;
+  font-size: 1.25rem;
+  color: #4b5563;
+}
+
+.ctaButton {
+  margin-top: 2rem;
+  display: inline-block;
+  background-color: #f59e0b;
+  color: white;
+  padding: 0.75rem 2rem;
+  border-radius: 0.5rem;
+  font-weight: 600;
+  text-decoration: none;
+  transition: background-color 0.3s ease;
+}
+
+.ctaButton:hover {
+  background-color: #d97706;
+}
