@@ -1,80 +1,109 @@
-const Stream = require('../models/stream');
+const { Stream, validateStream } = require('../models/stream');
+const { Subject } = require('../models/Subject');
 
-// Create a new Stream
-const createStream = async (req, res) => {
+// Get all active streams
+const getAllStreams = async (req, res) => {
   try {
-    const { name, description } = req.body;
-
-    const existing = await Stream.findOne({ name });
-    if (existing) {
-      return res.status(400).json({ message: 'Stream already exists' });
-    }
-
-    const stream = new Stream({ name, description });
-    await stream.save();
-
-    res.status(201).json(stream);
+    const streams = await Stream.find({ isActive: true }).sort({ name: 1 });
+    res.status(200).json(streams);
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    console.error('Error fetching streams:', error);
+    res.status(500).json({ error: 'Failed to fetch streams' });
   }
 };
 
-// Get all Streams
-const getStreams = async (req, res) => {
-  try {
-    const streams = await Stream.find().sort('name');
-    res.json(streams);
-  } catch (error) {
-    console.log(error.message)
-    res.status(500).json({ message: error.message });
-  }
-};
-
-// Get Stream by ID
+// Get stream by ID with subjects
 const getStreamById = async (req, res) => {
   try {
     const stream = await Stream.findById(req.params.id);
-    if (!stream) return res.status(404).json({ message: 'Stream not found' });
-    res.json(stream);
+    if (!stream) {
+      return res.status(404).json({ error: 'Stream not found' });
+    }
+
+    const subjects = await Subject.find({ stream: req.params.id, isActive: true }).sort({ name: 1 });
+    
+    res.status(200).json({
+      stream,
+      subjects
+    });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    console.error('Error fetching stream:', error);
+    res.status(500).json({ error: 'Failed to fetch stream' });
   }
 };
 
-// Update Stream by ID
+// Create new stream (Admin only)
+const createStream = async (req, res) => {
+  try {
+    const { error } = validateStream(req.body);
+    if (error) {
+      return res.status(400).json({ error: error.details[0].message });
+    }
+
+    const existingStream = await Stream.findOne({ name: req.body.name });
+    if (existingStream) {
+      return res.status(409).json({ error: 'Stream already exists' });
+    }
+
+    const stream = new Stream(req.body);
+    await stream.save();
+    
+    res.status(201).json(stream);
+  } catch (error) {
+    console.error('Error creating stream:', error);
+    res.status(500).json({ error: 'Failed to create stream' });
+  }
+};
+
+// Update stream (Admin only)
 const updateStream = async (req, res) => {
   try {
-    const { name, description } = req.body;
-    const stream = await Stream.findById(req.params.id);
+    const { error } = validateStream(req.body);
+    if (error) {
+      return res.status(400).json({ error: error.details[0].message });
+    }
 
-    if (!stream) return res.status(404).json({ message: 'Stream not found' });
+    const stream = await Stream.findByIdAndUpdate(
+      req.params.id,
+      req.body,
+      { new: true, runValidators: true }
+    );
 
-    stream.name = name || stream.name;
-    stream.description = description || stream.description;
+    if (!stream) {
+      return res.status(404).json({ error: 'Stream not found' });
+    }
 
-    await stream.save();
-
-    res.json(stream);
+    res.status(200).json(stream);
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    console.error('Error updating stream:', error);
+    res.status(500).json({ error: 'Failed to update stream' });
   }
 };
 
-// Delete Stream by ID
+// Delete stream (Admin only)
 const deleteStream = async (req, res) => {
   try {
-    const stream = await Stream.findByIdAndDelete(req.params.id);
-    if (!stream) return res.status(404).json({ message: 'Stream not found' });
-    res.json({ message: 'Stream deleted successfully' });
+    const stream = await Stream.findByIdAndUpdate(
+      req.params.id,
+      { isActive: false },
+      { new: true }
+    );
+
+    if (!stream) {
+      return res.status(404).json({ error: 'Stream not found' });
+    }
+
+    res.status(200).json({ message: 'Stream deactivated successfully' });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    console.error('Error deleting stream:', error);
+    res.status(500).json({ error: 'Failed to delete stream' });
   }
 };
 
 module.exports = {
-  createStream,
-  getStreams,
+  getAllStreams,
   getStreamById,
+  createStream,
   updateStream,
-  deleteStream,
+  deleteStream
 };

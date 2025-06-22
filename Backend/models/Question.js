@@ -2,68 +2,88 @@ const mongoose = require('mongoose');
 const Joi = require('joi');
 
 const QuestionSchema = new mongoose.Schema({
-  question: {
+  questionText: {
     type: String,
     required: true,
-    minlength: 5,
-    maxlength: 500,
-    trim: true
+    trim: true,
+    minlength: 10,
+    maxlength: 1000
   },
-  options: {
-    type: [String],
-    validate: {
-      validator: function(arr) {
-        return arr.length === 4;
-      },
-      message: 'Exactly 4 options are required'
+  options: [{
+    text: {
+      type: String,
+      required: true,
+      trim: true,
+      maxlength: 500
     },
-    required: true
-  },
-  correctOption: {
-    type: String,
-    required: true,
-    validate: {
-      validator: function(value) {
-        return this.options.includes(value);
-      },
-      message: 'Correct option must be one of the provided options'
+    isCorrect: {
+      type: Boolean,
+      default: false
     }
-  },
-  stream: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'Stream',
-    required: true,
-  },
-  topic: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'Topic',
-    required: true,
+  }],
+  explanation: {
+    type: String,
+    trim: true,
+    maxlength: 1000
   },
   difficulty: {
     type: String,
     enum: ['Easy', 'Medium', 'Hard'],
     required: true
+  },
+  stream: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Stream',
+    required: true
+  },
+  subject: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Subject',
+    required: true
+  },
+  topic: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Topic',
+    required: true
+  },
+  isActive: {
+    type: Boolean,
+    default: true
+  },
+  createdBy: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Admin'
   }
 }, { timestamps: true });
 
-// Joi validation schema for Question
-const questionJoiSchema = Joi.object({
-  question: Joi.string().min(5).max(500).required(),
-  options: Joi.array().items(Joi.string()).length(4).required(),
-  correctOption: Joi.string().required(),
-  stream: Joi.string().required(),  // expect ObjectId string
-  topic: Joi.string().required(),   // expect ObjectId string
-  difficulty: Joi.string().valid('Easy', 'Medium', 'Hard').required()
+// Validation to ensure exactly one correct answer
+QuestionSchema.pre('save', function(next) {
+  const correctAnswers = this.options.filter(option => option.isCorrect);
+  if (correctAnswers.length !== 1) {
+    return next(new Error('Question must have exactly one correct answer'));
+  }
+  next();
 });
 
-// Validation function
-const validateQuestion = (question) => {
-  return questionJoiSchema.validate(question);
-};
+const questionJoiSchema = Joi.object({
+  questionText: Joi.string().min(10).max(1000).required(),
+  options: Joi.array().items(
+    Joi.object({
+      text: Joi.string().max(500).required(),
+      isCorrect: Joi.boolean().required()
+    })
+  ).min(2).max(6).required(),
+  explanation: Joi.string().max(1000).allow('', null),
+  difficulty: Joi.string().valid('Easy', 'Medium', 'Hard').required(),
+  stream: Joi.string().required(),
+  subject: Joi.string().required(),
+  topic: Joi.string().required(),
+  isActive: Joi.boolean(),
+  createdBy: Joi.string()
+});
+
+const validateQuestion = (question) => questionJoiSchema.validate(question);
 
 const Question = mongoose.model('Question', QuestionSchema);
 
-module.exports = {
-  Question,
-  validateQuestion
-};
+module.exports = { Question, validateQuestion };

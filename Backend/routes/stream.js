@@ -1,18 +1,23 @@
 const express = require('express');
 const router = express.Router();
 const {
-  createStream,
-  getStreams,
+  getAllStreams,
   getStreamById,
+  createStream,
   updateStream,
-  deleteStream,
+  deleteStream
 } = require('../controllers/streamcontroller');
 
-// Routes
-router.post('/', createStream);          // Create new stream
-router.get('/', getStreams);              // Get all streams
-router.get('/:id', getStreamById);        // Get stream by id
-router.put('/:id', updateStream);         // Update stream
-router.delete('/:id', deleteStream);      // Delete stream
+const verifyToken = require('../middleware/authMiddleware');
+const isAdmin = require('../middleware/adminMiddleware');
+
+// Public routes
+router.get('/', getAllStreams);
+router.get('/:id', getStreamById);
+
+// Admin only routes
+router.post('/', isAdmin, createStream);
+router.put('/:id', isAdmin, updateStream);
+router.delete('/:id', isAdmin, deleteStream);
 
 module.exports = router;

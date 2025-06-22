@@ -1,90 +1,163 @@
-const { Topic, validateTopic } = require("../models/Topic");
-const { Stream } = require("../models/stream"); // To ensure stream exists
+const { Topic, validateTopic } = require('../models/Topic');
+const { Subject } = require('../models/Subject');
+const { Question } = require('../models/Question');
 
-// Create a new topic
+// Get topics by subject ID
+const getTopicsBySubject = async (req, res) => {
+  try {
+    const topics = await Topic.find({ 
+      subject: req.params.subjectId, 
+      isActive: true 
+    })
+    .populate('subject', 'name')
+    .populate('stream', 'name')
+    .sort({ name: 1 });
+    
+    res.status(200).json(topics);
+  } catch (error) {
+    console.error('Error fetching topics:', error);
+    res.status(500).json({ error: 'Failed to fetch topics' });
+  }
+};
+
+// Get topics by multiple subject IDs
+const getTopicsBySubjects = async (req, res) => {
+  try {
+    const { subjectIds } = req.body;
+    
+    if (!subjectIds || !Array.isArray(subjectIds)) {
+      return res.status(400).json({ error: 'Subject IDs array is required' });
+    }
+
+    const topics = await Topic.find({ 
+      subject: { $in: subjectIds }, 
+      isActive: true 
+    })
+    .populate('subject', 'name')
+    .populate('stream', 'name')
+    .sort({ name: 1 });
+    
+    res.status(200).json(topics);
+  } catch (error) {
+    console.error('Error fetching topics:', error);
+    res.status(500).json({ error: 'Failed to fetch topics' });
+  }
+};
+
+// Get topic by ID with question count
+const getTopicById = async (req, res) => {
+  try {
+    const topic = await Topic.findById(req.params.id)
+      .populate('subject', 'name')
+      .populate('stream', 'name');
+      
+    if (!topic) {
+      return res.status(404).json({ error: 'Topic not found' });
+    }
+
+    const questionCount = await Question.countDocuments({ 
+      topic: req.params.id, 
+      isActive: true 
+    });
+    
+    res.status(200).json({
+      topic,
+      questionCount
+    });
+  } catch (error) {
+    console.error('Error fetching topic:', error);
+    res.status(500).json({ error: 'Failed to fetch topic' });
+  }
+};
+
+// Create new topic (Admin only)
 const createTopic = async (req, res) => {
-  const { error } = validateTopic(req.body);
-  if (error) return res.status(400).json({ message: error.details[0].message });
-
-  const { name, stream, description } = req.body;
-
   try {
-    const streamExists = await Stream.findById(stream);
-    if (!streamExists) return res.status(404).json({ message: "Stream not found" });
+    const { error } = validateTopic(req.body);
+    if (error) {
+      return res.status(400).json({ error: error.details[0].message });
+    }
 
-    const topic = new Topic({ name, stream, description });
+    // Verify subject exists
+    const subject = await Subject.findById(req.body.subject);
+    if (!subject) {
+      return res.status(404).json({ error: 'Subject not found' });
+    }
+
+    const existingTopic = await Topic.findOne({ 
+      name: req.body.name, 
+      subject: req.body.subject 
+    });
+    if (existingTopic) {
+      return res.status(409).json({ error: 'Topic already exists in this subject' });
+    }
+
+    const topic = new Topic(req.body);
     await topic.save();
-    res.status(201).json({ message: "Topic created successfully", topic });
-  } catch (err) {
-    res.status(500).json({ message: "Server error", error: err.message });
+    
+    const populatedTopic = await Topic.findById(topic._id)
+      .populate('subject', 'name')
+      .populate('stream', 'name');
+      
+    res.status(201).json(populatedTopic);
+  } catch (error) {
+    console.error('Error creating topic:', error);
+    res.status(500).json({ error: 'Failed to create topic' });
   }
 };
 
-// Get all topics 
-const getTopics = async (req, res) => {
-  try {
-    const filter = {};
-    if (req.query.stream) {
-      filter.stream = req.query.stream;
-    }
-
-    const topics = await Topic.find(filter).populate("stream", "name");
-    res.json(topics);
-  } catch (err) {
-    res.status(500).json({ message: "Server error", error: err.message });
-  }
-};
-
-const getTopicsByStream = async (req, res) => {
-  try {
-    const { streamId } = req.params;
-
-    // Validate streamId if you want (optional)
-    if (!streamId.match(/^[0-9a-fA-F]{24}$/)) {
-      return res.status(400).json({ message: "Invalid stream ID" });
-    }
-
-    const topics = await Topic.find({ stream: streamId });
-
-    res.json(topics);
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ message: "Server error" });
-  }
-};
-
-
-// Update a topic
+// Update topic (Admin only)
 const updateTopic = async (req, res) => {
-  const { error } = validateTopic(req.body);
-  if (error) return res.status(400).json({ message: error.details[0].message });
-
   try {
-    const topic = await Topic.findByIdAndUpdate(req.params.id, req.body, { new: true });
-    if (!topic) return res.status(404).json({ message: "Topic not found" });
+    const { error } = validateTopic(req.body);
+    if (error) {
+      return res.status(400).json({ error: error.details[0].message });
+    }
 
-    res.json({ message: "Topic updated successfully", topic });
-  } catch (err) {
-    res.status(500).json({ message: "Server error", error: err.message });
+    const topic = await Topic.findByIdAndUpdate(
+      req.params.id,
+      req.body,
+      { new: true, runValidators: true }
+    )
+    .populate('subject', 'name')
+    .populate('stream', 'name');
+
+    if (!topic) {
+      return res.status(404).json({ error: 'Topic not found' });
+    }
+
+    res.status(200).json(topic);
+  } catch (error) {
+    console.error('Error updating topic:', error);
+    res.status(500).json({ error: 'Failed to update topic' });
   }
 };
 
-// Delete a topic
+// Delete topic (Admin only)
 const deleteTopic = async (req, res) => {
   try {
-    const topic = await Topic.findByIdAndDelete(req.params.id);
-    if (!topic) return res.status(404).json({ message: "Topic not found" });
+    const topic = await Topic.findByIdAndUpdate(
+      req.params.id,
+      { isActive: false },
+      { new: true }
+    );
 
-    res.json({ message: "Topic deleted successfully" });
-  } catch (err) {
-    res.status(500).json({ message: "Server error", error: err.message });
+    if (!topic) {
+      return res.status(404).json({ error: 'Topic not found' });
+    }
+
+    res.status(200).json({ message: 'Topic deactivated successfully' });
+  } catch (error) {
+    console.error('Error deleting topic:', error);
+    res.status(500).json({ error: 'Failed to delete topic' });
   }
 };
 
 module.exports = {
+  getTopicsBySubject,
+  getTopicsBySubjects,
+  getTopicById,
   createTopic,
-  getTopics,
-  getTopicsByStream,
   updateTopic,
   deleteTopic
 };

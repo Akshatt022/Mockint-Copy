@@ -1,18 +1,13 @@
 const mongoose = require('mongoose');
 const Joi = require('joi');
 
-const TopicSchema = new mongoose.Schema({
+const SubjectSchema = new mongoose.Schema({
   name: {
     type: String,
     required: true,
     trim: true,
     minlength: 2,
     maxlength: 100
-  },
-  subject: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'Subject',
-    required: true
   },
   stream: {
     type: mongoose.Schema.Types.ObjectId,
@@ -30,19 +25,18 @@ const TopicSchema = new mongoose.Schema({
   }
 }, { timestamps: true });
 
-// Compound index for unique topic names within each subject
-TopicSchema.index({ name: 1, subject: 1 }, { unique: true });
+// Compound index to ensure unique subject names within each stream
+SubjectSchema.index({ name: 1, stream: 1 }, { unique: true });
 
-const topicJoiSchema = Joi.object({
+const subjectJoiSchema = Joi.object({
   name: Joi.string().min(2).max(100).required(),
-  subject: Joi.string().required(),
   stream: Joi.string().required(),
   description: Joi.string().max(500).allow('', null),
   isActive: Joi.boolean()
 });
 
-const validateTopic = (topic) => topicJoiSchema.validate(topic);
+const validateSubject = (subject) => subjectJoiSchema.validate(subject);
 
-const Topic = mongoose.model('Topic', TopicSchema);
+const Subject = mongoose.model('Subject', SubjectSchema);
 
-module.exports = { Topic, validateTopic };
+module.exports = { Subject, validateSubject };
