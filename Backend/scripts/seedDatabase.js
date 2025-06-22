@@ -2,7 +2,10 @@ const mongoose = require('mongoose');
 const { Stream } = require('../models/stream');
 const { Subject } = require('../models/Subject');
 const { Topic } = require('../models/Topic');
+
+
 require('dotenv').config();
+
 
 const seedData = {
   streams: [
@@ -149,7 +152,7 @@ const seedDatabase = async () => {
     console.log('🌱 Starting database seeding...');
 
     // Connect to MongoDB
-    await mongoose.connect(process.env.MONGODB_URI);
+    await mongoose.connect("mongodb+srv://akshatsingh22032004:mockint1234@mockintcluster0.vw8lp37.mongodb.net/");
     console.log('✅ Connected to MongoDB');
 
     // Clear existing data
