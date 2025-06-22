@@ -1,6 +1,10 @@
+// src/pages/Register.jsx - Enhanced Version  
 import React, { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import { Eye, EyeOff, User, Mail, Phone, MapPin, Lock } from "lucide-react";
+import { 
+  Eye, EyeOff, User, Mail, Phone, MapPin, Lock, AlertCircle, 
+  CheckCircle, Loader, Shield, Check, X 
+} from "lucide-react";
 
 const Register = () => {
   const navigate = useNavigate();
@@ -14,6 +18,7 @@ const Register = () => {
     state: "",
     city: "",
     pincode: "",
+    acceptTerms: false
   });
 
   const [errors, setErrors] = useState({});
@@ -21,383 +26,568 @@ const Register = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [passwordStrength, setPasswordStrength] = useState(0);
 
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData((prevData) => ({
-      ...prevData,
-      [name]: value,
-    }));
-    if (errors[name]) {
-      setErrors((prevErrors) => ({
-        ...prevErrors,
-        [name]: null,
-      }));
+  // Indian states for dropdown
+  const indianStates = [
+    "Andhra Pradesh", "Arunachal Pradesh", "Assam", "Bihar", "Chhattisgarh",
+    "Goa", "Gujarat", "Haryana", "Himachal Pradesh", "Jharkhand", "Karnataka",
+    "Kerala", "Madhya Pradesh", "Maharashtra", "Manipur", "Meghalaya", "Mizoram",
+    "Nagaland", "Odisha", "Punjab", "Rajasthan", "Sikkim", "Tamil Nadu",
+    "Telangana", "Tripura", "Uttarakhand", "Uttar Pradesh", "West Bengal"
+  ];
+
+  // Password strength checker
+  const checkPasswordStrength = (password) => {
+    let strength = 0;
+    if (password.length >= 8) strength++;
+    if (/[a-z]/.test(password)) strength++;
+    if (/[A-Z]/.test(password)) strength++;
+    if (/[0-9]/.test(password)) strength++;
+    if (/[^A-Za-z0-9]/.test(password)) strength++;
+    return strength;
+  };
+
+  const getPasswordStrengthText = (strength) => {
+    switch (strength) {
+      case 0:
+      case 1: return { text: "Very Weak", color: "text-red-500" };
+      case 2: return { text: "Weak", color: "text-orange-500" };
+      case 3: return { text: "Fair", color: "text-yellow-500" };
+      case 4: return { text: "Good", color: "text-blue-500" };
+      case 5: return { text: "Strong", color: "text-green-500" };
+      default: return { text: "", color: "" };
     }
   };
 
   const validateForm = () => {
     let newErrors = {};
+
+    // Name validation
+    if (!formData.name.trim()) {
+      newErrors.name = 'Full name is required';
+    } else if (formData.name.trim().length < 2) {
+      newErrors.name = 'Name must be at least 2 characters long';
+    }
+
+    // Email validation
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    const phoneRegex = /^[6-9]\d{9}$/;
-    const pincodeRegex = /^[1-9][0-9]{5}$/;
-
-    if (!formData.name.trim()) newErrors.name = 'Name is required.';
     if (!formData.email.trim()) {
-      newErrors.email = 'Email is required.';
+      newErrors.email = 'Email is required';
     } else if (!emailRegex.test(formData.email)) {
-      newErrors.email = 'Please enter a valid email address.';
+      newErrors.email = 'Please enter a valid email address';
     }
 
-    if (!formData.password) {
-      newErrors.password = 'Password is required.';
-    } else if (formData.password.length < 8) {
-      newErrors.password = 'Password must be at least 8 characters long.';
-    }
-
-    if (!formData.confirmPassword) {
-      newErrors.confirmPassword = 'Please confirm your password.';
-    } else if (formData.password !== formData.confirmPassword) {
-      newErrors.confirmPassword = 'Passwords do not match.';
-    }
-
+    // Phone validation (Indian format)
+    const phoneRegex = /^[6-9]\d{9}$/;
     if (!formData.phone.trim()) {
-      newErrors.phone = 'Phone number is required.';
-    } else if (!phoneRegex.test(formData.phone)) {
-      newErrors.phone = 'Please enter a valid 10-digit Indian phone number.';
+      newErrors.phone = 'Phone number is required';
+    } else if (!phoneRegex.test(formData.phone.replace(/\s+/g, ''))) {
+      newErrors.phone = 'Please enter a valid 10-digit Indian phone number';
     }
 
-    if (!formData.address.trim()) newErrors.address = 'Address is required.';
-    if (!formData.state.trim()) newErrors.state = 'State is required.';
-    if (!formData.city.trim()) newErrors.city = 'City is required.';
+    // Password validation
+    if (!formData.password) {
+      newErrors.password = 'Password is required';
+    } else if (formData.password.length < 8) {
+      newErrors.password = 'Password must be at least 8 characters long';
+    } else if (passwordStrength < 3) {
+      newErrors.password = 'Password is too weak. Include uppercase, lowercase, numbers, and special characters';
+    }
 
+    // Confirm password validation
+    if (!formData.confirmPassword) {
+      newErrors.confirmPassword = 'Please confirm your password';
+    } else if (formData.password !== formData.confirmPassword) {
+      newErrors.confirmPassword = 'Passwords do not match';
+    }
+
+    // Address validation
+    if (!formData.address.trim()) newErrors.address = 'Address is required';
+    if (!formData.state.trim()) newErrors.state = 'State is required';
+    if (!formData.city.trim()) newErrors.city = 'City is required';
+
+    // Pincode validation
+    const pincodeRegex = /^[1-9][0-9]{5}$/;
     if (!formData.pincode.trim()) {
-      newErrors.pincode = 'Pincode is required.';
+      newErrors.pincode = 'Pincode is required';
     } else if (!pincodeRegex.test(formData.pincode)) {
-      newErrors.pincode = 'Please enter a valid 6-digit Indian pincode.';
+      newErrors.pincode = 'Please enter a valid 6-digit Indian pincode';
+    }
+
+    // Terms acceptance
+    if (!formData.acceptTerms) {
+      newErrors.acceptTerms = 'You must accept the terms and conditions';
     }
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
+  const handleChange = (e) => {
+    const { name, value, type, checked } = e.target;
+    const inputValue = type === 'checkbox' ? checked : value;
+    
+    setFormData(prevData => ({
+      ...prevData,
+      [name]: inputValue
+    }));
+
+    // Clear specific field error
+    if (errors[name]) {
+      setErrors(prevErrors => ({
+        ...prevErrors,
+        [name]: ''
+      }));
+    }
+
+    // Update password strength
+    if (name === 'password') {
+      setPasswordStrength(checkPasswordStrength(value));
+    }
+
+    // Clear submission message
+    if (submissionMessage) setSubmissionMessage("");
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setSubmissionMessage("");
-    setIsSubmitting(true);
 
     if (!validateForm()) {
       setSubmissionMessage("Please correct the errors in the form.");
-      setIsSubmitting(false);
       return;
     }
 
-    const userPayload = {
-      name: formData.name,
-      email: formData.email,
-      password: formData.password,
-      phone: formData.phone,
-      addresses: [
-        {
-          address: formData.address,
-          state: formData.state,
-          city: formData.city,
-          pincode: Number(formData.pincode),
-        },
-      ],
-    };
+    setIsSubmitting(true);
 
     try {
-      const res = await fetch("http://localhost:5000/auth/register", {
+      const submitData = {
+        name: formData.name.trim(),
+        email: formData.email.trim().toLowerCase(),
+        password: formData.password,
+        phone: formData.phone.replace(/\s+/g, ''),
+        addresses: [{
+          address: formData.address.trim(),
+          state: formData.state,
+          city: formData.city.trim(),
+          pincode: parseInt(formData.pincode)
+        }]
+      };
+
+      const response = await fetch("http://localhost:5000/auth/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(userPayload),
+        body: JSON.stringify(submitData),
       });
 
-      const data = await res.json();
+      const data = await response.json();
 
-      if (res.ok) {
-        setSubmissionMessage("Registration successful! Redirecting to dashboard...");
-        localStorage.setItem("token", data.token);
-        setTimeout(() => navigate("/"), 1500);
+      if (response.ok) {
+        setSubmissionMessage("Registration successful! Redirecting to login...");
+        setTimeout(() => {
+          navigate("/login");
+        }, 2000);
       } else {
-        setSubmissionMessage(data.error || "Registration failed. Please try again.");
-        if (data.errors) {
-          const backendErrors = {};
-          data.errors.forEach(err => {
-            backendErrors[err.field] = err.message;
-          });
-          setErrors(prevErrors => ({ ...prevErrors, ...backendErrors }));
-        }
+        setSubmissionMessage(data.error || data.message || "Registration failed. Please try again.");
       }
-    } catch (err) {
-      console.error("Registration API error:", err);
-      setSubmissionMessage("Error connecting to server. Please check your network connection.");
+    } catch (error) {
+      console.error("Registration error:", error);
+      setSubmissionMessage("Failed to connect to the server. Please check your connection and try again.");
     } finally {
       setIsSubmitting(false);
     }
   };
 
+  const strengthIndicator = getPasswordStrengthText(passwordStrength);
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#121212] via-[#1a1a1a] to-[#0f0f0f] flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8 font-poppins">
-      <div className="max-w-2xl w-full space-y-3">
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 py-12 px-4">
+      <div className="max-w-2xl mx-auto">
         {/* Header */}
-        <div className="text-center">
-          <div className="flex justify-center items-center gap-0 mb-0">
-            <img
-              src="/ChatGPT Image May 26, 2025, 01_25_37 PM.png"
-              alt="Mockint Logo"
-              className="h-22 w-22"
-            />
-            <span className="text-[#93c572] text-3xl font-bold tracking-wide">
-              Mockint
-            </span>
+        <div className="text-center mb-8">
+          <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-r from-blue-600 to-purple-600 rounded-2xl mb-4">
+            <User className="w-8 h-8 text-white" />
           </div>
-          <h2 className="text-3xl font-bold text-white mb-2">Create Your Account</h2>
-          <p className="text-gray-400">Join us and start your journey today</p>
+          <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent mb-2">
+            Join Mockint
+          </h1>
+          <p className="text-gray-300 text-lg">Create your account and start your exam preparation journey</p>
         </div>
 
-        {/* Form Container */}
-        <div className="bg-[#1e1e1e] shadow-2xl rounded-2xl p-8 border border-gray-800">
-          {/* Success/Error Message */}
+        {/* Registration Form */}
+        <div className="bg-gray-800/50 backdrop-blur-lg rounded-2xl shadow-2xl border border-gray-700/50 p-8">
+          {/* Status Message */}
           {submissionMessage && (
-            <div className={`mb-6 p-4 rounded-lg text-center font-medium ${
+            <div className={`mb-6 p-4 rounded-lg border transition-all duration-300 ${
               submissionMessage.includes('successful') 
-                ? 'bg-green-900/20 text-green-400 border border-green-800' 
-                : 'bg-red-900/20 text-red-400 border border-red-800'
+                ? 'bg-green-900/20 border-green-500/30 text-green-400'
+                : 'bg-red-900/20 border-red-500/30 text-red-400'
             }`}>
-              {submissionMessage}
+              <div className="flex items-center gap-2">
+                {submissionMessage.includes('successful') ? (
+                  <CheckCircle className="w-5 h-5" />
+                ) : (
+                  <AlertCircle className="w-5 h-5" />
+                )}
+                <span className="text-sm font-medium">{submissionMessage}</span>
+              </div>
             </div>
           )}
 
           <form onSubmit={handleSubmit} className="space-y-6">
-            {/* Name Field */}
+            {/* Personal Information Section */}
             <div>
-              <label htmlFor="name" className="block text-sm font-medium text-gray-300 mb-2">
-                Full Name
-              </label>
-              <div className="relative">
-                <User className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 h-5 w-5" />
-                <input
-                  id="name"
-                  name="name"
-                  type="text"
-                  placeholder="Enter your full name"
-                  value={formData.name}
-                  onChange={handleChange}
-                  className={`w-full pl-11 pr-4 py-3 bg-[#2a2a2a] border rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-[#93c572] focus:border-transparent transition duration-200 ${
-                    errors.name ? 'border-red-500' : 'border-gray-700'
-                  }`}
-                  aria-invalid={errors.name ? "true" : "false"}
-                />
-              </div>
-              {errors.name && <p className="mt-1 text-sm text-red-400">{errors.name}</p>}
-            </div>
-
-            {/* Email Field */}
-            <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-300 mb-2">
-                Email Address
-              </label>
-              <div className="relative">
-                <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 h-5 w-5" />
-                <input
-                  id="email"
-                  name="email"
-                  type="email"
-                  placeholder="Enter your email"
-                  value={formData.email}
-                  onChange={handleChange}
-                  className={`w-full pl-11 pr-4 py-3 bg-[#2a2a2a] border rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-[#93c572] focus:border-transparent transition duration-200 ${
-                    errors.email ? 'border-red-500' : 'border-gray-700'
-                  }`}
-                  aria-invalid={errors.email ? "true" : "false"}
-                />
-              </div>
-              {errors.email && <p className="mt-1 text-sm text-red-400">{errors.email}</p>}
-            </div>
-
-            {/* Phone Field */}
-            <div>
-              <label htmlFor="phone" className="block text-sm font-medium text-gray-300 mb-2">
-                Phone Number
-              </label>
-              <div className="relative">
-                <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 h-5 w-5" />
-                <input
-                  id="phone"
-                  name="phone"
-                  type="tel"
-                  placeholder="9876543210"
-                  value={formData.phone}
-                  onChange={handleChange}
-                  className={`w-full pl-11 pr-4 py-3 bg-[#2a2a2a] border rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-[#93c572] focus:border-transparent transition duration-200 ${
-                    errors.phone ? 'border-red-500' : 'border-gray-700'
-                  }`}
-                  aria-invalid={errors.phone ? "true" : "false"}
-                />
-              </div>
-              {errors.phone && <p className="mt-1 text-sm text-red-400">{errors.phone}</p>}
-            </div>
-
-            {/* Password Fields */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label htmlFor="password" className="block text-sm font-medium text-gray-300 mb-2">
-                  Password
-                </label>
-                <div className="relative">
-                  <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 h-5 w-5" />
-                  <input
-                    id="password"
-                    name="password"
-                    type={showPassword ? "text" : "password"}
-                    placeholder="Enter password"
-                    value={formData.password}
-                    onChange={handleChange}
-                    className={`w-full pl-11 pr-11 py-3 bg-[#2a2a2a] border rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-[#93c572] focus:border-transparent transition duration-200 ${
-                      errors.password ? 'border-red-500' : 'border-gray-700'
-                    }`}
-                    aria-invalid={errors.password ? "true" : "false"}
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-300"
-                  >
-                    {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
-                  </button>
+              <h3 className="text-lg font-semibold text-gray-200 mb-4 flex items-center gap-2">
+                <User className="w-5 h-5" />
+                Personal Information
+              </h3>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {/* Full Name */}
+                <div className="md:col-span-2">
+                  <label htmlFor="name" className="block text-sm font-medium text-gray-300 mb-2">
+                    Full Name *
+                  </label>
+                  <div className="relative">
+                    <User className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 h-5 w-5" />
+                    <input
+                      id="name"
+                      name="name"
+                      type="text"
+                      placeholder="Enter your full name"
+                      value={formData.name}
+                      onChange={handleChange}
+                      className={`w-full pl-11 pr-4 py-3 bg-gray-700/50 border rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-200 ${
+                        errors.name ? 'border-red-500' : 'border-gray-600'
+                      }`}
+                      aria-invalid={errors.name ? "true" : "false"}
+                    />
+                  </div>
+                  {errors.name && <p className="mt-1 text-sm text-red-400 flex items-center gap-1">
+                    <AlertCircle className="w-4 h-4" />
+                    {errors.name}
+                  </p>}
                 </div>
-                {errors.password && <p className="mt-1 text-sm text-red-400">{errors.password}</p>}
-              </div>
 
-              <div>
-                <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-300 mb-2">
-                  Confirm Password
-                </label>
-                <div className="relative">
-                  <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 h-5 w-5" />
-                  <input
-                    id="confirmPassword"
-                    name="confirmPassword"
-                    type={showConfirmPassword ? "text" : "password"}
-                    placeholder="Confirm password"
-                    value={formData.confirmPassword}
-                    onChange={handleChange}
-                    className={`w-full pl-11 pr-11 py-3 bg-[#2a2a2a] border rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-[#93c572] focus:border-transparent transition duration-200 ${
-                      errors.confirmPassword ? 'border-red-500' : 'border-gray-700'
-                    }`}
-                    aria-invalid={errors.confirmPassword ? "true" : "false"}
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-300"
-                  >
-                    {showConfirmPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
-                  </button>
+                {/* Email */}
+                <div>
+                  <label htmlFor="email" className="block text-sm font-medium text-gray-300 mb-2">
+                    Email Address *
+                  </label>
+                  <div className="relative">
+                    <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 h-5 w-5" />
+                    <input
+                      id="email"
+                      name="email"
+                      type="email"
+                      placeholder="Enter your email"
+                      value={formData.email}
+                      onChange={handleChange}
+                      className={`w-full pl-11 pr-4 py-3 bg-gray-700/50 border rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-200 ${
+                        errors.email ? 'border-red-500' : 'border-gray-600'
+                      }`}
+                    />
+                  </div>
+                  {errors.email && <p className="mt-1 text-sm text-red-400 flex items-center gap-1">
+                    <AlertCircle className="w-4 h-4" />
+                    {errors.email}
+                  </p>}
                 </div>
-                {errors.confirmPassword && <p className="mt-1 text-sm text-red-400">{errors.confirmPassword}</p>}
+
+                {/* Phone */}
+                <div>
+                  <label htmlFor="phone" className="block text-sm font-medium text-gray-300 mb-2">
+                    Phone Number *
+                  </label>
+                  <div className="relative">
+                    <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 h-5 w-5" />
+                    <input
+                      id="phone"
+                      name="phone"
+                      type="tel"
+                      placeholder="9876543210"
+                      value={formData.phone}
+                      onChange={handleChange}
+                      className={`w-full pl-11 pr-4 py-3 bg-gray-700/50 border rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-200 ${
+                        errors.phone ? 'border-red-500' : 'border-gray-600'
+                      }`}
+                    />
+                  </div>
+                  {errors.phone && <p className="mt-1 text-sm text-red-400 flex items-center gap-1">
+                    <AlertCircle className="w-4 h-4" />
+                    {errors.phone}
+                  </p>}
+                </div>
               </div>
             </div>
 
-            {/* Address Field */}
+            {/* Password Section */}
             <div>
-              <label htmlFor="address" className="block text-sm font-medium text-gray-300 mb-2">
-                Address
-              </label>
-              <div className="relative">
-                <MapPin className="absolute left-3 top-3 text-gray-500 h-5 w-5" />
-                <textarea
-                  id="address"
-                  name="address"
-                  rows="3"
-                  placeholder="Enter your full address"
-                  value={formData.address}
-                  onChange={handleChange}
-                  className={`w-full pl-11 pr-4 py-3 bg-[#2a2a2a] border rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-[#93c572] focus:border-transparent transition duration-200 resize-none ${
-                    errors.address ? 'border-red-500' : 'border-gray-700'
-                  }`}
-                  aria-invalid={errors.address ? "true" : "false"}
-                />
+              <h3 className="text-lg font-semibold text-gray-200 mb-4 flex items-center gap-2">
+                <Lock className="w-5 h-5" />
+                Security
+              </h3>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {/* Password */}
+                <div>
+                  <label htmlFor="password" className="block text-sm font-medium text-gray-300 mb-2">
+                    Password *
+                  </label>
+                  <div className="relative">
+                    <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 h-5 w-5" />
+                    <input
+                      id="password"
+                      name="password"
+                      type={showPassword ? "text" : "password"}
+                      placeholder="Enter password"
+                      value={formData.password}
+                      onChange={handleChange}
+                      className={`w-full pl-11 pr-11 py-3 bg-gray-700/50 border rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-200 ${
+                        errors.password ? 'border-red-500' : 'border-gray-600'
+                      }`}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-300"
+                    >
+                      {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                    </button>
+                  </div>
+                  
+                  {/* Password Strength Indicator */}
+                  {formData.password && (
+                    <div className="mt-2">
+                      <div className="flex items-center gap-2 mb-1">
+                        <div className="flex-1 h-2 bg-gray-600 rounded-full overflow-hidden">
+                          <div 
+                            className={`h-full transition-all duration-300 ${
+                              passwordStrength <= 1 ? 'bg-red-500' :
+                              passwordStrength <= 2 ? 'bg-orange-500' :
+                              passwordStrength <= 3 ? 'bg-yellow-500' :
+                              passwordStrength <= 4 ? 'bg-blue-500' : 'bg-green-500'
+                            }`}
+                            style={{ width: `${(passwordStrength / 5) * 100}%` }}
+                          />
+                        </div>
+                        <span className={`text-xs font-medium ${strengthIndicator.color}`}>
+                          {strengthIndicator.text}
+                        </span>
+                      </div>
+                      <div className="text-xs text-gray-400">
+                        <div className="flex items-center gap-1">
+                          {formData.password.length >= 8 ? <Check className="w-3 h-3 text-green-400" /> : <X className="w-3 h-3 text-red-400" />}
+                          At least 8 characters
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                  
+                  {errors.password && <p className="mt-1 text-sm text-red-400 flex items-center gap-1">
+                    <AlertCircle className="w-4 h-4" />
+                    {errors.password}
+                  </p>}
+                </div>
+
+                {/* Confirm Password */}
+                <div>
+                  <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-300 mb-2">
+                    Confirm Password *
+                  </label>
+                  <div className="relative">
+                    <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 h-5 w-5" />
+                    <input
+                      id="confirmPassword"
+                      name="confirmPassword"
+                      type={showConfirmPassword ? "text" : "password"}
+                      placeholder="Confirm password"
+                      value={formData.confirmPassword}
+                      onChange={handleChange}
+                      className={`w-full pl-11 pr-11 py-3 bg-gray-700/50 border rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-200 ${
+                        errors.confirmPassword ? 'border-red-500' : 'border-gray-600'
+                      }`}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                      className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-300"
+                    >
+                      {showConfirmPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                    </button>
+                  </div>
+                  
+                  {/* Password Match Indicator */}
+                  {formData.confirmPassword && (
+                    <div className="mt-1 flex items-center gap-1 text-xs">
+                      {formData.password === formData.confirmPassword ? (
+                        <>
+                          <Check className="w-3 h-3 text-green-400" />
+                          <span className="text-green-400">Passwords match</span>
+                        </>
+                      ) : (
+                        <>
+                          <X className="w-3 h-3 text-red-400" />
+                          <span className="text-red-400">Passwords don't match</span>
+                        </>
+                      )}
+                    </div>
+                  )}
+                  
+                  {errors.confirmPassword && <p className="mt-1 text-sm text-red-400 flex items-center gap-1">
+                    <AlertCircle className="w-4 h-4" />
+                    {errors.confirmPassword}
+                  </p>}
+                </div>
               </div>
-              {errors.address && <p className="mt-1 text-sm text-red-400">{errors.address}</p>}
             </div>
 
-            {/* Location Fields */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div>
-                <label htmlFor="state" className="block text-sm font-medium text-gray-300 mb-2">
-                  State
-                </label>
-                <input
-                  id="state"
-                  name="state"
-                  type="text"
-                  placeholder="State"
-                  value={formData.state}
-                  onChange={handleChange}
-                  className={`w-full px-4 py-3 bg-[#2a2a2a] border rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-[#93c572] focus:border-transparent transition duration-200 ${
-                    errors.state ? 'border-red-500' : 'border-gray-700'
-                  }`}
-                  aria-invalid={errors.state ? "true" : "false"}
-                />
-                {errors.state && <p className="mt-1 text-sm text-red-400">{errors.state}</p>}
-              </div>
+            {/* Address Section */}
+            <div>
+              <h3 className="text-lg font-semibold text-gray-200 mb-4 flex items-center gap-2">
+                <MapPin className="w-5 h-5" />
+                Address Information
+              </h3>
+              
+              <div className="space-y-4">
+                {/* Full Address */}
+                <div>
+                  <label htmlFor="address" className="block text-sm font-medium text-gray-300 mb-2">
+                    Street Address *
+                  </label>
+                  <textarea
+                    id="address"
+                    name="address"
+                    rows="3"
+                    placeholder="Enter your full address"
+                    value={formData.address}
+                    onChange={handleChange}
+                    className={`w-full px-4 py-3 bg-gray-700/50 border rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-200 resize-none ${
+                      errors.address ? 'border-red-500' : 'border-gray-600'
+                    }`}
+                  />
+                  {errors.address && <p className="mt-1 text-sm text-red-400 flex items-center gap-1">
+                    <AlertCircle className="w-4 h-4" />
+                    {errors.address}
+                  </p>}
+                </div>
 
-              <div>
-                <label htmlFor="city" className="block text-sm font-medium text-gray-300 mb-2">
-                  City
-                </label>
-                <input
-                  id="city"
-                  name="city"
-                  type="text"
-                  placeholder="City"
-                  value={formData.city}
-                  onChange={handleChange}
-                  className={`w-full px-4 py-3 bg-[#2a2a2a] border rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-[#93c572] focus:border-transparent transition duration-200 ${
-                    errors.city ? 'border-red-500' : 'border-gray-700'
-                  }`}
-                  aria-invalid={errors.city ? "true" : "false"}
-                />
-                {errors.city && <p className="mt-1 text-sm text-red-400">{errors.city}</p>}
-              </div>
+                {/* State, City, Pincode */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div>
+                    <label htmlFor="state" className="block text-sm font-medium text-gray-300 mb-2">
+                      State *
+                    </label>
+                    <select
+                      id="state"
+                      name="state"
+                      value={formData.state}
+                      onChange={handleChange}
+                      className={`w-full px-4 py-3 bg-gray-700/50 border rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-200 ${
+                        errors.state ? 'border-red-500' : 'border-gray-600'
+                      }`}
+                    >
+                      <option value="">Select State</option>
+                      {indianStates.map(state => (
+                        <option key={state} value={state}>{state}</option>
+                      ))}
+                    </select>
+                    {errors.state && <p className="mt-1 text-sm text-red-400 flex items-center gap-1">
+                      <AlertCircle className="w-4 h-4" />
+                      {errors.state}
+                    </p>}
+                  </div>
 
-              <div>
-                <label htmlFor="pincode" className="block text-sm font-medium text-gray-300 mb-2">
-                  Pincode
-                </label>
-                <input
-                  id="pincode"
-                  name="pincode"
-                  type="text"
-                  pattern="\d{6}"
-                  placeholder="123456"
-                  value={formData.pincode}
-                  onChange={handleChange}
-                  className={`w-full px-4 py-3 bg-[#2a2a2a] border rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-[#93c572] focus:border-transparent transition duration-200 ${
-                    errors.pincode ? 'border-red-500' : 'border-gray-700'
-                  }`}
-                  aria-invalid={errors.pincode ? "true" : "false"}
-                />
-                {errors.pincode && <p className="mt-1 text-sm text-red-400">{errors.pincode}</p>}
+                  <div>
+                    <label htmlFor="city" className="block text-sm font-medium text-gray-300 mb-2">
+                      City *
+                    </label>
+                    <input
+                      id="city"
+                      name="city"
+                      type="text"
+                      placeholder="Enter city"
+                      value={formData.city}
+                      onChange={handleChange}
+                      className={`w-full px-4 py-3 bg-gray-700/50 border rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-200 ${
+                        errors.city ? 'border-red-500' : 'border-gray-600'
+                      }`}
+                    />
+                    {errors.city && <p className="mt-1 text-sm text-red-400 flex items-center gap-1">
+                      <AlertCircle className="w-4 h-4" />
+                      {errors.city}
+                    </p>}
+                  </div>
+
+                  <div>
+                    <label htmlFor="pincode" className="block text-sm font-medium text-gray-300 mb-2">
+                      Pincode *
+                    </label>
+                    <input
+                      id="pincode"
+                      name="pincode"
+                      type="text"
+                      placeholder="123456"
+                      value={formData.pincode}
+                      onChange={handleChange}
+                      className={`w-full px-4 py-3 bg-gray-700/50 border rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-200 ${
+                        errors.pincode ? 'border-red-500' : 'border-gray-600'
+                      }`}
+                    />
+                    {errors.pincode && <p className="mt-1 text-sm text-red-400 flex items-center gap-1">
+                      <AlertCircle className="w-4 h-4" />
+                      {errors.pincode}
+                    </p>}
+                  </div>
+                </div>
               </div>
+            </div>
+
+            {/* Terms and Conditions */}
+            <div>
+              <label className="flex items-start gap-3">
+                <input
+                  type="checkbox"
+                  name="acceptTerms"
+                  checked={formData.acceptTerms}
+                  onChange={handleChange}
+                  className="mt-1 h-4 w-4 text-blue-600 border-gray-500 rounded focus:ring-blue-500 bg-gray-700"
+                />
+                <span className="text-sm text-gray-300">
+                  I accept the{' '}
+                  <Link to="/terms" className="text-blue-400 hover:text-blue-300 underline">
+                    Terms and Conditions
+                  </Link>{' '}
+                  and{' '}
+                  <Link to="/privacy" className="text-blue-400 hover:text-blue-300 underline">
+                    Privacy Policy
+                  </Link>
+                  *
+                </span>
+              </label>
+              {errors.acceptTerms && <p className="mt-1 text-sm text-red-400 flex items-center gap-1">
+                <AlertCircle className="w-4 h-4" />
+                {errors.acceptTerms}
+              </p>}
             </div>
 
             {/* Submit Button */}
             <button
               type="submit"
               disabled={isSubmitting}
-              className="w-full bg-[#93c572] hover:bg-[#7fa85a] text-[#121212] font-semibold py-3 px-4 rounded-lg transition duration-300 ease-in-out transform hover:scale-[1.02] focus:outline-none focus:ring-2 focus:ring-[#93c572] focus:ring-offset-2 focus:ring-offset-[#1e1e1e] disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
+              className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-semibold py-3 px-4 rounded-lg transition duration-300 ease-in-out transform hover:scale-[1.02] focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-gray-800 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
             >
               {isSubmitting ? (
-                <div className="flex items-center justify-center">
-                  <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-[#121212] mr-2"></div>
+                <div className="flex items-center justify-center gap-2">
+                  <Loader className="animate-spin h-5 w-5" />
                   Creating Account...
                 </div>
               ) : (
-                'Create Account'
+                <div className="flex items-center justify-center gap-2">
+                  <Shield className="w-5 h-5" />
+                  Create Account
+                </div>
               )}
             </button>
 
@@ -407,7 +597,7 @@ const Register = () => {
                 Already have an account?{' '}
                 <Link 
                   to="/login" 
-                  className="text-[#93c572] hover:text-[#7fa85a] font-medium transition duration-200 hover:underline"
+                  className="text-blue-400 hover:text-blue-300 font-medium transition duration-200 hover:underline"
                 >
                   Sign in here
                 </Link>

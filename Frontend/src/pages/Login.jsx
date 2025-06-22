@@ -1,39 +1,75 @@
-import React, { useState } from "react";
-import { Eye, EyeOff, Mail, Lock, AlertCircle, CheckCircle, Loader } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+// src/pages/Login.jsx - Consistent Dark Theme
+import React, { useState, useEffect } from "react";
+import { Eye, EyeOff, Mail, Lock, AlertCircle, CheckCircle, Loader, Shield, User } from "lucide-react";
+import { useNavigate, Link } from "react-router-dom";
 
 const Login = ({ setIsAuthenticated }) => {
   const navigate = useNavigate();
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  const [formData, setFormData] = useState({
+    email: "",
+    password: "",
+    rememberMe: false
+  });
+  const [errors, setErrors] = useState({});
   const [message, setMessage] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [errors, setErrors] = useState({});
+  const [loginAttempts, setLoginAttempts] = useState(0);
+
+  // Load remembered email on component mount
+  useEffect(() => {
+    const rememberedEmail = localStorage.getItem("rememberedEmail");
+    if (rememberedEmail) {
+      setFormData(prev => ({ ...prev, email: rememberedEmail, rememberMe: true }));
+    }
+  }, []);
 
   const validateForm = () => {
     const newErrors = {};
 
-    if (!email) {
+    // Email validation
+    if (!formData.email.trim()) {
       newErrors.email = 'Email is required';
-    } else if (!/\S+@\S+\.\S+/.test(email)) {
-      newErrors.email = 'Please enter a valid email';
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
+      newErrors.email = 'Please enter a valid email address';
     }
 
-    if (!password) {
+    // Password validation
+    if (!formData.password) {
       newErrors.password = 'Password is required';
-    } else if (password.length < 6) {
-      newErrors.password = 'Password must be at least 6 characters';
+    } else if (formData.password.length < 6) {
+      newErrors.password = 'Password must be at least 6 characters long';
     }
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
+  const handleInputChange = (e) => {
+    const { name, value, type, checked } = e.target;
+    const inputValue = type === 'checkbox' ? checked : value;
+    
+    setFormData(prev => ({ ...prev, [name]: inputValue }));
+
+    // Clear specific field error when user starts typing
+    if (errors[name]) {
+      setErrors(prev => ({ ...prev, [name]: '' }));
+    }
+
+    // Clear general message when user starts typing
+    if (message) setMessage("");
+  };
+
   const handleLogin = async (e) => {
     e.preventDefault();
 
     if (!validateForm()) return;
+
+    // Check if too many failed attempts
+    if (loginAttempts >= 5) {
+      setMessage("Too many failed attempts. Please try again later.");
+      return;
+    }
 
     setIsLoading(true);
     setMessage("");
@@ -42,184 +78,233 @@ const Login = ({ setIsAuthenticated }) => {
       const res = await fetch("http://localhost:5000/auth/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify({ 
+          email: formData.email.trim().toLowerCase(), 
+          password: formData.password 
+        }),
       });
+      
       const data = await res.json();
 
       if (res.ok) {
+        // Store token
         localStorage.setItem("token", data.token);
+        
+        // Handle remember me
+        if (formData.rememberMe) {
+          localStorage.setItem("rememberedEmail", formData.email);
+        } else {
+          localStorage.removeItem("rememberedEmail");
+        }
+
+        // Store user data if available
+        if (data.user) {
+          localStorage.setItem("userData", JSON.stringify(data.user));
+        }
+
         setMessage("Login successful! Redirecting...");
         setIsAuthenticated(true);
+        setLoginAttempts(0); // Reset attempts on success
+        
         setTimeout(() => {
-          navigate('/');
+          navigate('/', { replace: true });
         }, 1000);
       } else {
-        setMessage(data.error || "Login failed");
+        setMessage(data.error || data.message || "Login failed");
+        setLoginAttempts(prev => prev + 1);
       }
-    } catch (e) {
-      setMessage("Failed to connect to the server.",e);
+    } catch (error) {
+      console.error("Login error:", error);
+      setMessage("Failed to connect to the server. Please check your connection and try again.");
+      setLoginAttempts(prev => prev + 1);
     } finally {
       setIsLoading(false);
     }
   };
 
-  const handleOnRegister = () => {
-    navigate('/register');
-  };
-
-  const handleInputChange = (field, value) => {
-    if (field === 'email') setEmail(value);
-    if (field === 'password') setPassword(value);
-
-    if (errors[field]) {
-      setErrors(prev => ({
-        ...prev,
-        [field]: ''
-      }));
+  const handleForgotPassword = () => {
+    if (!formData.email) {
+      setMessage("Please enter your email address first.");
+      return;
     }
+    setMessage("Password reset feature coming soon!");
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 flex items-center justify-center p-4 relative overflow-hidden">
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 flex items-center justify-center p-4 relative overflow-hidden">
       {/* Animated Background Elements */}
       <div className="absolute inset-0 overflow-hidden">
-        <div className="absolute -top-40 -right-40 w-80 h-80 bg-gradient-to-r from-blue-400 to-purple-500 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-blob"></div>
-        <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-gradient-to-r from-yellow-400 to-pink-500 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-blob animation-delay-2000"></div>
-        <div className="absolute top-40 left-40 w-80 h-80 bg-gradient-to-r from-green-400 to-blue-500 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-blob animation-delay-4000"></div>
+        <div className="absolute -top-40 -right-40 w-80 h-80 bg-gradient-to-r from-blue-400/20 to-purple-500/20 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-blob"></div>
+        <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-gradient-to-r from-green-400/20 to-blue-500/20 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-blob animation-delay-2000"></div>
+        <div className="absolute top-40 left-40 w-80 h-80 bg-gradient-to-r from-purple-400/20 to-pink-500/20 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-blob animation-delay-4000"></div>
       </div>
 
       <div className="relative w-full max-w-md">
+        {/* Header */}
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-16 h-16">
-            <img src="/ChatGPT Image May 26, 2025, 01_25_37 PM.png" alt="Mockint Logo" className="h-20 w-25" />
+          <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-r from-blue-600 to-purple-600 rounded-2xl mb-4">
+            <Shield className="w-8 h-8 text-white" />
           </div>
-          <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent mb-2">
+          <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent mb-2">
             Mockint
           </h1>
-          <p className="text-gray-600 text-lg">Welcome back! Please sign in to continue</p>
+          <p className="text-gray-300 text-lg">Welcome back! Please sign in to continue</p>
         </div>
 
-        <div className="bg-white/80 backdrop-blur-lg rounded-2xl shadow-2xl border border-white/20 p-8 relative">
-          <div className="absolute inset-0 bg-gradient-to-r from-white/10 to-white/5 rounded-2xl"></div>
-          <div className="relative">
-            <div className="text-center mb-8">
-              <h2 className="text-2xl font-bold text-gray-800 mb-2">Sign In</h2>
-              <div className="w-12 h-1 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full mx-auto"></div>
+        {/* Login Form */}
+        <div className="bg-gray-800/50 backdrop-blur-lg rounded-2xl shadow-2xl border border-gray-700/50 p-8">
+          <div className="text-center mb-8">
+            <h2 className="text-2xl font-bold text-gray-200 mb-2">Sign In</h2>
+            <div className="w-12 h-1 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full mx-auto"></div>
+          </div>
+
+          {/* Status Message */}
+          {message && (
+            <div className={`mb-6 p-4 rounded-lg border transition-all duration-300 ${
+              message.includes('successful') 
+                ? 'bg-green-900/20 border-green-500/30 text-green-400'
+                : 'bg-red-900/20 border-red-500/30 text-red-400'
+            }`}>
+              <div className="flex items-center gap-2">
+                {message.includes('successful') ? (
+                  <CheckCircle className="w-5 h-5" />
+                ) : (
+                  <AlertCircle className="w-5 h-5" />
+                )}
+                <span className="text-sm font-medium">{message}</span>
+              </div>
+            </div>
+          )}
+
+          {/* Login Form */}
+          <form onSubmit={handleLogin} className="space-y-6">
+            {/* Email Field */}
+            <div>
+              <label htmlFor="email" className="block text-sm font-medium text-gray-300 mb-2">
+                Email Address
+              </label>
+              <div className="relative">
+                <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-500" />
+                <input
+                  id="email"
+                  name="email"
+                  type="email"
+                  autoComplete="email"
+                  placeholder="Enter your email"
+                  value={formData.email}
+                  onChange={handleInputChange}
+                  className={`w-full pl-11 pr-4 py-3 bg-gray-700/50 border rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 ${
+                    errors.email ? 'border-red-500' : 'border-gray-600'
+                  }`}
+                  aria-invalid={errors.email ? "true" : "false"}
+                  aria-describedby={errors.email ? "email-error" : undefined}
+                />
+              </div>
+              {errors.email && (
+                <p id="email-error" className="mt-1 text-sm text-red-400 flex items-center gap-1">
+                  <AlertCircle className="w-4 h-4" />
+                  {errors.email}
+                </p>
+              )}
             </div>
 
-            {message && (
-              <div className={`mb-6 p-4 rounded-lg border transition-all duration-300 ${
-                message.includes('successful') 
-                  ? 'bg-green-50 border-green-200 text-green-700' 
-                  : 'bg-red-50 border-red-200 text-red-700'
-              }`}>
-                <div className="flex items-center gap-2">
-                  {message.includes('successful') ? (
-                    <CheckCircle className="w-5 h-5 flex-shrink-0" />
-                  ) : (
-                    <AlertCircle className="w-5 h-5 flex-shrink-0" />
-                  )}
-                  <span className="text-sm font-medium">{message}</span>
-                </div>
+            {/* Password Field */}
+            <div>
+              <label htmlFor="password" className="block text-sm font-medium text-gray-300 mb-2">
+                Password
+              </label>
+              <div className="relative">
+                <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-500" />
+                <input
+                  id="password"
+                  name="password"
+                  type={showPassword ? "text" : "password"}
+                  autoComplete="current-password"
+                  placeholder="Enter your password"
+                  value={formData.password}
+                  onChange={handleInputChange}
+                  className={`w-full pl-11 pr-11 py-3 bg-gray-700/50 border rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 ${
+                    errors.password ? 'border-red-500' : 'border-gray-600'
+                  }`}
+                  aria-invalid={errors.password ? "true" : "false"}
+                  aria-describedby={errors.password ? "password-error" : undefined}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-300 transition-colors"
+                  aria-label={showPassword ? "Hide password" : "Show password"}
+                >
+                  {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                </button>
               </div>
-            )}
+              {errors.password && (
+                <p id="password-error" className="mt-1 text-sm text-red-400 flex items-center gap-1">
+                  <AlertCircle className="w-4 h-4" />
+                  {errors.password}
+                </p>
+              )}
+            </div>
 
-            <div className="space-y-6">
-              <div>
-                <label htmlFor="email" className="block text-sm font-semibold text-gray-700 mb-2">Email Address</label>
-                <div className="relative">
-                  <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 h-5 w-5" />
-                  <input
-                    type="email"
-                    id="email"
-                    value={email}
-                    onChange={(e) => handleInputChange('email', e.target.value)}
-                    className={`w-full pl-10 pr-4 py-3 bg-gray-50/50 border-2 rounded-xl text-gray-800 placeholder-gray-500 focus:outline-none focus:ring-2 transition-all duration-300 ${
-                      errors.email 
-                        ? 'border-red-300 focus:ring-red-500 focus:border-red-500 bg-red-50/50' 
-                        : 'border-gray-200 focus:ring-blue-500 focus:border-blue-500 hover:border-gray-300'
-                    }`}
-                    placeholder="Enter your email address"
-                    required
-                  />
-                </div>
-                {errors.email && (
-                  <p className="mt-2 text-sm text-red-600 flex items-center gap-1">
-                    <AlertCircle className="w-4 h-4" />
-                    {errors.email}
-                  </p>
-                )}
-              </div>
-
-              <div>
-                <label htmlFor="password" className="block text-sm font-semibold text-gray-700 mb-2">Password</label>
-                <div className="relative">
-                  <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 h-5 w-5" />
-                  <input
-                    type={showPassword ? 'text' : 'password'}
-                    id="password"
-                    value={password}
-                    onChange={(e) => handleInputChange('password', e.target.value)}
-                    className={`w-full pl-10 pr-12 py-3 bg-gray-50/50 border-2 rounded-xl text-gray-800 placeholder-gray-500 focus:outline-none focus:ring-2 transition-all duration-300 ${
-                      errors.password 
-                        ? 'border-red-300 focus:ring-red-500 focus:border-red-500 bg-red-50/50' 
-                        : 'border-gray-200 focus:ring-blue-500 focus:border-blue-500 hover:border-gray-300'
-                    }`}
-                    placeholder="Enter your password"
-                    required
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600 transition-colors"
-                  >
-                    {showPassword ? (
-                      <EyeOff className="h-5 w-5" />
-                    ) : (
-                      <Eye className="h-5 w-5" />
-                    )}
-                  </button>
-                </div>
-                {errors.password && (
-                  <p className="mt-2 text-sm text-red-600 flex items-center gap-1">
-                    <AlertCircle className="w-4 h-4" />
-                    {errors.password}
-                  </p>
-                )}
-              </div>
-
+            {/* Remember Me & Forgot Password */}
+            <div className="flex items-center justify-between">
+              <label className="flex items-center">
+                <input
+                  type="checkbox"
+                  name="rememberMe"
+                  checked={formData.rememberMe}
+                  onChange={handleInputChange}
+                  className="h-4 w-4 text-blue-600 border-gray-500 rounded focus:ring-blue-500 bg-gray-700"
+                />
+                <span className="ml-2 text-sm text-gray-300">Remember me</span>
+              </label>
               <button
-                onClick={handleLogin}
-                disabled={isLoading}
-                className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-semibold py-3 px-4 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 transform hover:scale-105 active:scale-95 shadow-lg hover:shadow-xl"
+                type="button"
+                onClick={handleForgotPassword}
+                className="text-sm text-blue-400 hover:text-blue-300 hover:underline transition-colors"
               >
-                {isLoading ? (
-                  <div className="flex items-center justify-center gap-2">
-                    <Loader className="w-5 h-5 animate-spin" />
-                    Signing in...
-                  </div>
-                ) : (
-                  'Sign In'
-                )}
+                Forgot password?
               </button>
             </div>
 
-            <div className="mt-8 text-center">
-              <p className="text-gray-600">
-                Don't have an account?{' '}
-                <button
-                  onClick={handleOnRegister}
-                  className="text-blue-600 hover:text-blue-700 font-semibold hover:underline transition-colors duration-200"
-                >
-                  Sign up here
-                </button>
-              </p>
-            </div>
+            {/* Submit Button */}
+            <button
+              type="submit"
+              disabled={isLoading || loginAttempts >= 5}
+              className="w-full bg-gradient-to-r from-blue-600 to-purple-600 text-white py-3 px-4 rounded-lg font-semibold hover:from-blue-700 hover:to-purple-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-gray-800 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 transform hover:scale-105 active:scale-95"
+            >
+              {isLoading ? (
+                <div className="flex items-center justify-center gap-2">
+                  <Loader className="w-5 h-5 animate-spin" />
+                  Signing in...
+                </div>
+              ) : (
+                <div className="flex items-center justify-center gap-2">
+                  <User className="w-5 h-5" />
+                  Sign In
+                </div>
+              )}
+            </button>
+          </form>
+
+          {/* Register Link */}
+          <div className="mt-8 text-center">
+            <p className="text-gray-400">
+              Don't have an account?{' '}
+              <Link
+                to="/register"
+                className="text-blue-400 hover:text-blue-300 font-semibold hover:underline transition-colors duration-200"
+              >
+                Sign up here
+              </Link>
+            </p>
           </div>
         </div>
 
+        {/* Security Notice */}
         <div className="mt-6 text-center">
-          <p className="text-sm text-gray-500">
+          <p className="text-sm text-gray-400 flex items-center justify-center gap-1">
+            <Shield className="w-4 h-4" />
             Secure login powered by JWT authentication
           </p>
         </div>
