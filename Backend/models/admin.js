@@ -29,6 +29,10 @@ const AdminSchema = new mongoose.Schema({
     
 }, { timestamps: true });
 
+// Indexes for performance  
+AdminSchema.index({ email: 1 }, { unique: true });
+AdminSchema.index({ role: 1 });
+
 const adminJoiSchema = Joi.object({
     name: Joi.string()
         .min(2)
@@ -51,7 +55,7 @@ const validateAdmin = (admin) => {
     return adminJoiSchema.validate(admin);
 };
 
-const adminModel = mongoose.model('admin', AdminSchema);
+const adminModel = mongoose.model('Admin', AdminSchema);
 
 module.exports = {
     adminModel,

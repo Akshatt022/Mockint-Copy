@@ -33,7 +33,7 @@ const updateUser = async (req, res) => {
 };
 
 
-const bcrypt = require("bcrypt");
+const bcrypt = require("bcryptjs");
 
 const changePassword = async (req, res) => {
   try {

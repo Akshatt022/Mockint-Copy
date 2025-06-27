@@ -19,7 +19,7 @@ const TestInterface = ({ testConfig, onTestComplete, onBackToSelection }) => {
   const [submitting, setSubmitting] = useState(false);
 
   const timerRef = useRef(null);
-  const API_BASE = 'http://localhost:5000/api';
+  const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000';
 
   // Fetch questions when component mounts
   useEffect(() => {

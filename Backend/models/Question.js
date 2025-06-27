@@ -56,6 +56,13 @@ const QuestionSchema = new mongoose.Schema({
   }
 }, { timestamps: true });
 
+// Indexes for performance
+QuestionSchema.index({ stream: 1, subject: 1, topic: 1 });
+QuestionSchema.index({ difficulty: 1 });
+QuestionSchema.index({ isActive: 1 });
+QuestionSchema.index({ createdBy: 1 });
+QuestionSchema.index({ createdAt: -1 });
+
 // Validation to ensure exactly one correct answer
 QuestionSchema.pre('save', function(next) {
   const correctAnswers = this.options.filter(option => option.isCorrect);

@@ -43,15 +43,13 @@ const UserSchema = new mongoose.Schema({
       }
     }
   ],
-  testsTaken: [
-    {
-      score: Number,
-      date: Date,
-      totalQuestions: Number,
-      correctAnswers: Number
-    }
-  ]
+  // testsTaken removed - use TestResult collection for test history
 }, { timestamps: true });
+
+// Indexes for performance
+UserSchema.index({ email: 1 }, { unique: true });
+UserSchema.index({ phone: 1 });
+UserSchema.index({ createdAt: -1 });
 
 
 // Joi validation schema

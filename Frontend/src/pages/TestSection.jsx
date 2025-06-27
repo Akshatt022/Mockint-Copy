@@ -3,13 +3,15 @@ import {
   BookOpen, Clock, Target, TrendingUp, Star, ArrowRight, Users, Award,
   Play, ChevronLeft, ChevronRight, Flag, CheckCircle, XCircle, RotateCcw,
   Home, FileText, BarChart3, Settings, Filter, Zap, Brain, Award as Trophy,
-  Loader, AlertCircle, Timer, ArrowLeft, Send, Shield, Eye, EyeOff
+  Loader, AlertCircle, Timer, ArrowLeft, Send, Shield, Eye, EyeOff,
+  Sparkles, Rocket, Medal, Crown, Flame, Coffee, Lightbulb, Calendar,
+  User, MapPin, Activity, PieChart, TrendingDown, MoreHorizontal, Plus
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 const API_BASE = 'http://localhost:5000/api';
 
-// Anti-Cheating Test Interface Component
+// Enhanced Anti-Cheating Test Interface Component
 const TestInterface = ({ testConfig, onTestComplete, onBackToSelection }) => {
   // Test state
   const [questions, setQuestions] = useState([]);
@@ -34,7 +36,7 @@ const TestInterface = ({ testConfig, onTestComplete, onBackToSelection }) => {
   const timerRef = useRef(null);
   const questionTimerRef = useRef(null);
 
-  // Anti-cheating: Enter fullscreen when test starts
+  // Anti-cheating functions (keeping existing logic)
   const enterFullscreen = useCallback(() => {
     const element = document.documentElement;
     if (element.requestFullscreen) {
@@ -46,7 +48,6 @@ const TestInterface = ({ testConfig, onTestComplete, onBackToSelection }) => {
     }
   }, []);
 
-  // Anti-cheating: Exit fullscreen
   const exitFullscreen = useCallback(() => {
     if (document.exitFullscreen) {
       document.exitFullscreen();
@@ -57,7 +58,6 @@ const TestInterface = ({ testConfig, onTestComplete, onBackToSelection }) => {
     }
   }, []);
 
-  // Anti-cheating: Log cheating attempts
   const logCheatingAttempt = useCallback((type, details = '') => {
     const attempt = {
       type,
@@ -69,168 +69,12 @@ const TestInterface = ({ testConfig, onTestComplete, onBackToSelection }) => {
     console.warn('🚨 Cheating attempt detected:', attempt);
   }, [currentQuestionIndex]);
 
-  // Anti-cheating: Disable text selection and context menu
-  useEffect(() => {
-    const disableSelection = (e) => {
-      e.preventDefault();
-      return false;
-    };
-
-    const disableContextMenu = (e) => {
-      e.preventDefault();
-      logCheatingAttempt('RIGHT_CLICK', 'Attempted to open context menu');
-      return false;
-    };
-
-    const disableKeyboardShortcuts = (e) => {
-      // Disable common shortcuts
-      if (
-        e.ctrlKey && (e.key === 'c' || e.key === 'v' || e.key === 'a' || e.key === 's' || e.key === 'p') ||
-        e.key === 'F12' ||
-        (e.ctrlKey && e.shiftKey && e.key === 'I') ||
-        (e.ctrlKey && e.shiftKey && e.key === 'C') ||
-        (e.ctrlKey && e.key === 'u') ||
-        e.key === 'F5' ||
-        (e.ctrlKey && e.key === 'r')
-      ) {
-        e.preventDefault();
-        logCheatingAttempt('KEYBOARD_SHORTCUT', `Attempted to use: ${e.ctrlKey ? 'Ctrl+' : ''}${e.shiftKey ? 'Shift+' : ''}${e.key}`);
-        return false;
-      }
-    };
-
-    // Add event listeners
-    document.addEventListener('selectstart', disableSelection);
-    document.addEventListener('dragstart', disableSelection);
-    document.addEventListener('contextmenu', disableContextMenu);
-    document.addEventListener('keydown', disableKeyboardShortcuts);
-
-    // CSS to disable text selection
-    document.body.style.userSelect = 'none';
-    document.body.style.webkitUserSelect = 'none';
-    document.body.style.mozUserSelect = 'none';
-    document.body.style.msUserSelect = 'none';
-
-    return () => {
-      document.removeEventListener('selectstart', disableSelection);
-      document.removeEventListener('dragstart', disableSelection);
-      document.removeEventListener('contextmenu', disableContextMenu);
-      document.removeEventListener('keydown', disableKeyboardShortcuts);
-      
-      // Restore text selection
-      document.body.style.userSelect = '';
-      document.body.style.webkitUserSelect = '';
-      document.body.style.mozUserSelect = '';
-      document.body.style.msUserSelect = '';
-    };
-  }, [logCheatingAttempt]);
-
-  // Anti-cheating: Monitor tab switching and page visibility
-  useEffect(() => {
-    const handleVisibilityChange = () => {
-      if (document.hidden) {
-        setTabSwitchCount(prev => prev + 1);
-        logCheatingAttempt('TAB_SWITCH', `Switched away from test tab. Count: ${tabSwitchCount + 1}`);
-        
-        // Warning after 3 tab switches
-        if (tabSwitchCount >= 2) {
-          alert('⚠️ WARNING: Multiple tab switches detected. Your test may be terminated for suspicious activity.');
-        }
-        
-        // Auto-submit after 5 tab switches
-        if (tabSwitchCount >= 4) {
-          logCheatingAttempt('AUTO_SUBMIT', 'Test auto-submitted due to excessive tab switching');
-          handleAutoSubmit();
-        }
-      }
-    };
-
-    const handleFocus = () => {
-      if (!isFullscreen && questions.length > 0) {
-        enterFullscreen();
-      }
-    };
-
-    const handleBlur = () => {
-      logCheatingAttempt('WINDOW_BLUR', 'Window lost focus');
-    };
-
-    document.addEventListener('visibilitychange', handleVisibilityChange);
-    window.addEventListener('focus', handleFocus);
-    window.addEventListener('blur', handleBlur);
-
-    return () => {
-      document.removeEventListener('visibilitychange', handleVisibilityChange);
-      window.removeEventListener('focus', handleFocus);
-      window.removeEventListener('blur', handleBlur);
-    };
-  }, [isFullscreen, tabSwitchCount, questions.length, enterFullscreen, logCheatingAttempt]);
-
-  // Anti-cheating: Monitor fullscreen changes
-  useEffect(() => {
-    const handleFullscreenChange = () => {
-      const fullscreenElement = document.fullscreenElement || document.webkitFullscreenElement || document.msFullscreenElement;
-      setIsFullscreen(!!fullscreenElement);
-      
-      if (!fullscreenElement && questions.length > 0) {
-        logCheatingAttempt('FULLSCREEN_EXIT', 'Attempted to exit fullscreen mode');
-        setTimeout(() => {
-          enterFullscreen();
-        }, 1000);
-      }
-    };
-
-    document.addEventListener('fullscreenchange', handleFullscreenChange);
-    document.addEventListener('webkitfullscreenchange', handleFullscreenChange);
-    document.addEventListener('msfullscreenchange', handleFullscreenChange);
-
-    return () => {
-      document.removeEventListener('fullscreenchange', handleFullscreenChange);
-      document.removeEventListener('webkitfullscreenchange', handleFullscreenChange);
-      document.removeEventListener('msfullscreenchange', handleFullscreenChange);
-    };
-  }, [questions.length, enterFullscreen, logCheatingAttempt]);
-
-  // Question timing for anti-cheating
-  useEffect(() => {
-    if (questions.length > 0) {
-      setQuestionStartTime(Date.now());
-      setCanMoveToNext(false);
-      
-      // Minimum time per question (10 seconds)
-      const timer = setTimeout(() => {
-        setCanMoveToNext(true);
-      }, 10000);
-
-      return () => clearTimeout(timer);
-    }
-  }, [currentQuestionIndex, questions.length]);
-
-  // Track time spent on each question
-  useEffect(() => {
-    const interval = setInterval(() => {
-      if (questionStartTime && questions.length > 0) {
-        const timeSpent = Date.now() - questionStartTime;
-        setQuestionTimeSpent(prev => ({
-          ...prev,
-          [questions[currentQuestionIndex]?._id]: timeSpent
-        }));
-      }
-    }, 1000);
-
-    return () => clearInterval(interval);
-  }, [questionStartTime, currentQuestionIndex, questions]);
-
-  // Fetch questions when component mounts
+  // Initialize test and set up security
   useEffect(() => {
     fetchTestQuestions();
     return () => {
-      if (timerRef.current) {
-        clearInterval(timerRef.current);
-      }
-      if (questionTimerRef.current) {
-        clearInterval(questionTimerRef.current);
-      }
+      if (timerRef.current) clearInterval(timerRef.current);
+      if (questionTimerRef.current) clearInterval(questionTimerRef.current);
       exitFullscreen();
     };
   }, [exitFullscreen]);
@@ -243,11 +87,7 @@ const TestInterface = ({ testConfig, onTestComplete, onBackToSelection }) => {
       const totalTime = Math.ceil(questions.length * 1.5) * 60;
       setTimeLeft(totalTime);
       startTimer(totalTime);
-      
-      // Enter fullscreen mode
-      setTimeout(() => {
-        enterFullscreen();
-      }, 1000);
+      setTimeout(() => enterFullscreen(), 1000);
     }
   }, [questions, testStartTime, enterFullscreen]);
 
@@ -257,6 +97,12 @@ const TestInterface = ({ testConfig, onTestComplete, onBackToSelection }) => {
       setError('');
 
       const token = localStorage.getItem('token');
+      console.log('Token for test generation:', token ? 'Token exists' : 'No token found');
+      
+      if (!token) {
+        throw new Error('No authentication token found. Please log in again.');
+      }
+      
       const response = await fetch(`${API_BASE}/tests/generate`, {
         method: 'POST',
         headers: {
@@ -268,17 +114,23 @@ const TestInterface = ({ testConfig, onTestComplete, onBackToSelection }) => {
 
       if (!response.ok) {
         const errorData = await response.json();
+        
+        // Handle authentication errors
+        if (response.status === 401) {
+          localStorage.removeItem('token');
+          window.location.href = '/login';
+          return;
+        }
+        
         throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
       }
 
       const data = await response.json();
-
       if (data.questions && data.questions.length > 0) {
         setQuestions(data.questions);
       } else {
         throw new Error('No questions received from server');
       }
-
     } catch (error) {
       console.error('Error generating test:', error);
       setError(error.message || 'Failed to load test questions');
@@ -315,8 +167,6 @@ const TestInterface = ({ testConfig, onTestComplete, onBackToSelection }) => {
       ...prev,
       [questions[currentQuestionIndex]._id]: optionIndex
     }));
-    
-    // Allow moving to next question after answering
     setCanMoveToNext(true);
   };
 
@@ -359,18 +209,12 @@ const TestInterface = ({ testConfig, onTestComplete, onBackToSelection }) => {
     return 'unanswered';
   };
 
-  const getAnsweredCount = () => {
-    return Object.keys(answers).length;
-  };
+  const getAnsweredCount = () => Object.keys(answers).length;
 
-  const handleSubmitTest = () => {
-    setShowSubmitModal(true);
-  };
+  const handleSubmitTest = () => setShowSubmitModal(true);
 
   const handleAutoSubmit = () => {
-    if (timerRef.current) {
-      clearInterval(timerRef.current);
-    }
+    if (timerRef.current) clearInterval(timerRef.current);
     submitTestAnswers();
   };
 
@@ -393,11 +237,12 @@ const TestInterface = ({ testConfig, onTestComplete, onBackToSelection }) => {
         startTime: testStartTime.toISOString(),
         endTime: endTime.toISOString(),
         difficulty: testConfig.difficulty,
-        // Anti-cheating data
         cheatingAttempts,
         tabSwitchCount,
         questionTimeSpent
       };
+
+      console.log('Submitting test data:', submitData);
 
       const token = localStorage.getItem('token');
       const response = await fetch(`${API_BASE}/tests/submit`, {
@@ -411,14 +256,13 @@ const TestInterface = ({ testConfig, onTestComplete, onBackToSelection }) => {
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to submit test');
+        console.error('Test submission failed:', errorData);
+        console.error('Response status:', response.status);
+        throw new Error(errorData.error || errorData.message || 'Failed to submit test');
       }
 
       const result = await response.json();
-      
-      // Exit fullscreen after test submission
       exitFullscreen();
-      
       onTestComplete(result);
 
     } catch (error) {
@@ -432,37 +276,44 @@ const TestInterface = ({ testConfig, onTestComplete, onBackToSelection }) => {
 
   const currentQuestion = questions[currentQuestionIndex];
 
-  // Loading state
+  // Loading state with modern design
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-900 flex items-center justify-center">
+      <div className="min-h-screen bg-gradient-to-br from-gray-900 via-blue-900 to-gray-900 flex items-center justify-center">
         <div className="text-center">
-          <Loader className="w-16 h-16 text-blue-400 animate-spin mx-auto mb-4" />
-          <h2 className="text-2xl font-bold text-white mb-2">Generating Your Test</h2>
-          <p className="text-gray-400">Please wait while we prepare your questions...</p>
-          <div className="mt-4 flex items-center justify-center space-x-2">
-            <Shield className="w-5 h-5 text-green-400" />
-            <span className="text-green-400 text-sm font-medium">Secure Testing Environment</span>
+          <div className="relative">
+            <div className="w-24 h-24 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin mx-auto mb-8"></div>
+            <Shield className="w-8 h-8 text-blue-400 absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2" />
+          </div>
+          <h2 className="text-3xl font-bold text-white mb-4 bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
+            Preparing Your Secure Test
+          </h2>
+          <p className="text-gray-100 text-lg mb-6">Creating optimized questions for your skill level...</p>
+          <div className="flex items-center justify-center space-x-2 text-blue-400">
+            <Shield className="w-5 h-5" />
+            <span className="font-medium">Secure Testing Environment Active</span>
           </div>
         </div>
       </div>
     );
   }
 
-  // Error state
+  // Error state with modern design
   if (error) {
     return (
-      <div className="min-h-screen bg-gray-900 flex items-center justify-center">
-        <div className="bg-red-600 border border-red-500 rounded-xl p-8 max-w-md mx-auto">
-          <div className="flex items-center space-x-3 mb-4">
-            <AlertCircle className="w-8 h-8 text-white" />
-            <h3 className="text-white font-bold text-xl">Error</h3>
+      <div className="min-h-screen bg-gradient-to-br from-gray-900 via-red-900 to-gray-900 flex items-center justify-center p-4">
+        <div className="bg-gray-800/90 backdrop-blur-xl border border-red-500/20 rounded-2xl p-8 max-w-md mx-auto">
+          <div className="flex items-center space-x-3 mb-6">
+            <div className="w-12 h-12 bg-red-500/20 rounded-full flex items-center justify-center">
+              <AlertCircle className="w-6 h-6 text-red-400" />
+            </div>
+            <h3 className="text-white font-bold text-xl">Test Generation Failed</h3>
           </div>
-          <p className="text-white mb-6">{error}</p>
+          <p className="text-gray-100 mb-6">{error}</p>
           <div className="flex space-x-3">
             <button
               onClick={fetchTestQuestions}
-              className="px-4 py-2 bg-white text-red-600 rounded-lg font-bold hover:bg-gray-100 flex-1"
+              className="flex-1 px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-medium transition-all duration-200 transform hover:scale-105"
             >
               Retry
             </button>
@@ -471,7 +322,7 @@ const TestInterface = ({ testConfig, onTestComplete, onBackToSelection }) => {
                 exitFullscreen();
                 onBackToSelection();
               }}
-              className="px-4 py-2 bg-red-700 text-white rounded-lg font-bold hover:bg-red-800 flex-1"
+              className="flex-1 px-6 py-3 bg-gray-600 hover:bg-gray-700 text-white rounded-xl font-medium transition-all duration-200"
             >
               Exit Test
             </button>
@@ -481,70 +332,99 @@ const TestInterface = ({ testConfig, onTestComplete, onBackToSelection }) => {
     );
   }
 
+  const progressPercentage = ((currentQuestionIndex + 1) / questions.length) * 100;
+  const timePercentage = (timeLeft / (Math.ceil(questions.length * 1.5) * 60)) * 100;
+
   return (
-    <div className="min-h-screen bg-gray-900" style={{ userSelect: 'none' }}>
-      {/* Test Header with Anti-Cheating Indicators */}
-      <div className="bg-gray-800 border-b border-gray-700 sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-4 py-3">
+    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-blue-900 to-gray-900" style={{ userSelect: 'none' }}>
+      {/* Enhanced Test Header */}
+      <div className="bg-gray-800/95 backdrop-blur-xl border-b border-gray-700/50 sticky top-0 z-50">
+        <div className="max-w-7xl mx-auto px-6 py-4">
           <div className="flex items-center justify-between">
-            {/* Left side - Question info */}
-            <div className="flex items-center space-x-4">
+            {/* Left - Question Info */}
+            <div className="flex items-center space-x-6">
               <button
                 onClick={() => {
-                  if (window.confirm('Are you sure you want to exit the test? All progress will be lost.')) {
+                  if (window.confirm('⚠️ Exit test? All progress will be lost.')) {
                     exitFullscreen();
                     onBackToSelection();
                   }
                 }}
-                className="p-2 text-gray-400 hover:text-white transition-colors rounded-lg hover:bg-gray-700"
+                className="p-3 text-gray-400 hover:text-white hover:bg-gray-700 rounded-xl transition-all duration-200"
                 title="Exit Test"
               >
                 <Home className="w-5 h-5" />
               </button>
+              
               <div>
-                <h1 className="text-lg font-bold text-white">
-                  Question {currentQuestionIndex + 1} of {questions.length}
-                </h1>
-                <p className="text-gray-400 text-sm">
+                <div className="flex items-center space-x-3 mb-1">
+                  <h1 className="text-xl font-bold text-white">
+                    Question {currentQuestionIndex + 1} of {questions.length}
+                  </h1>
+                  <div className="h-2 w-32 bg-gray-700 rounded-full overflow-hidden">
+                    <div 
+                      className="h-full bg-gradient-to-r from-blue-500 to-purple-500 transition-all duration-300"
+                      style={{ width: `${progressPercentage}%` }}
+                    />
+                  </div>
+                </div>
+                <p className="text-gray-200 text-sm">
                   {getAnsweredCount()} answered • {flaggedQuestions.size} flagged
                 </p>
               </div>
             </div>
 
-            {/* Center - Timer and Security Status */}
-            <div className="flex items-center space-x-4">
-              <div className="flex items-center space-x-2">
-                <Timer className={`w-5 h-5 ${timeLeft < 300 ? 'text-red-400' : 'text-blue-400'}`} />
-                <span className={`font-bold text-lg ${timeLeft < 300 ? 'text-red-400' : 'text-white'}`}>
-                  {formatTime(timeLeft)}
-                </span>
+            {/* Center - Timer with visual indicator */}
+            <div className="flex items-center space-x-6">
+              <div className="flex items-center space-x-3">
+                <div className="relative">
+                  <div className="w-12 h-12 rounded-full border-4 border-gray-600">
+                    <div 
+                      className={`absolute inset-0 rounded-full border-4 border-transparent ${
+                        timeLeft < 300 ? 'border-t-red-500' : 'border-t-blue-500'
+                      } animate-pulse`}
+                      style={{
+                        background: `conic-gradient(${timeLeft < 300 ? '#ef4444' : '#3b82f6'} ${timePercentage * 3.6}deg, transparent 0deg)`
+                      }}
+                    />
+                  </div>
+                  <Timer className={`w-5 h-5 absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 ${
+                    timeLeft < 300 ? 'text-red-400' : 'text-blue-400'
+                  }`} />
+                </div>
+                <div>
+                  <span className={`font-bold text-lg ${timeLeft < 300 ? 'text-red-400' : 'text-white'}`}>
+                    {formatTime(timeLeft)}
+                  </span>
+                  <p className="text-gray-200 text-xs">Time Left</p>
+                </div>
               </div>
               
-              {/* Security indicators */}
+              {/* Security Status */}
               <div className="flex items-center space-x-2">
                 {isFullscreen ? (
-                  <div className="flex items-center space-x-1">
+                  <div className="flex items-center space-x-2 px-3 py-1 bg-green-500/20 rounded-full">
                     <Shield className="w-4 h-4 text-green-400" />
-                    <span className="text-green-400 text-xs">Secure</span>
+                    <span className="text-green-400 text-sm font-medium">Secure</span>
                   </div>
                 ) : (
-                  <div className="flex items-center space-x-1">
+                  <div className="flex items-center space-x-2 px-3 py-1 bg-red-500/20 rounded-full">
                     <AlertCircle className="w-4 h-4 text-red-400" />
-                    <span className="text-red-400 text-xs">Not Secure</span>
+                    <span className="text-red-400 text-sm font-medium">Warning</span>
                   </div>
                 )}
                 {tabSwitchCount > 0 && (
-                  <div className="text-red-400 text-xs">
-                    Warnings: {tabSwitchCount}
+                  <div className="px-2 py-1 bg-yellow-500/20 rounded-full">
+                    <span className="text-yellow-400 text-xs">⚠️ {tabSwitchCount}</span>
                   </div>
                 )}
               </div>
             </div>
 
-            {/* Right side - Submit button */}
+            {/* Right - Submit Button */}
             <button
               onClick={handleSubmitTest}
-              className="px-6 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg font-bold transition-colors"
+              className="px-8 py-3 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white rounded-xl font-bold transition-all duration-200 transform hover:scale-105 shadow-lg"
             >
               Submit Test
             </button>
@@ -552,42 +432,47 @@ const TestInterface = ({ testConfig, onTestComplete, onBackToSelection }) => {
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 py-6">
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-          {/* Question Palette - Left Sidebar */}
+      <div className="max-w-7xl mx-auto px-6 py-8">
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
+          {/* Enhanced Question Palette */}
           <div className="lg:col-span-1">
-            <div className="bg-white rounded-xl p-6 sticky top-24">
-              <h3 className="text-lg font-bold text-gray-900 mb-4">Question Palette</h3>
+            <div className="bg-gray-800/50 backdrop-blur-xl rounded-2xl p-6 border border-gray-700/50 sticky top-28">
+              <h3 className="text-lg font-bold text-white mb-6 flex items-center">
+                <Target className="w-5 h-5 mr-2 text-blue-400" />
+                Question Palette
+              </h3>
               
-              {/* Navigation Restriction Notice */}
-              {!canMoveToNext && (
-                <div className="mb-4 p-3 bg-yellow-100 border border-yellow-400 rounded-lg">
-                  <div className="flex items-center space-x-2">
-                    <Clock className="w-4 h-4 text-yellow-700" />
-                    <span className="text-yellow-700 text-sm font-medium">
-                      Please wait 10s or answer to continue
-                    </span>
-                  </div>
+              {/* Progress Stats */}
+              <div className="grid grid-cols-2 gap-4 mb-6">
+                <div className="text-center p-3 bg-green-500/10 rounded-xl border border-green-500/20">
+                  <CheckCircle className="w-6 h-6 text-green-400 mx-auto mb-1" />
+                  <p className="text-green-400 font-bold text-lg">{getAnsweredCount()}</p>
+                  <p className="text-green-300 text-xs">Answered</p>
                 </div>
-              )}
-              
+                <div className="text-center p-3 bg-red-500/10 rounded-xl border border-red-500/20">
+                  <Flag className="w-6 h-6 text-red-400 mx-auto mb-1" />
+                  <p className="text-red-400 font-bold text-lg">{flaggedQuestions.size}</p>
+                  <p className="text-red-300 text-xs">Flagged</p>
+                </div>
+              </div>
+
               {/* Status Legend */}
-              <div className="space-y-2 mb-4 text-sm">
-                <div className="flex items-center space-x-2">
-                  <div className="w-4 h-4 bg-green-500 rounded"></div>
-                  <span className="text-gray-700">Answered</span>
+              <div className="space-y-2 mb-6 text-sm">
+                <div className="flex items-center space-x-3">
+                  <div className="w-4 h-4 bg-green-500 rounded-full shadow-lg"></div>
+                  <span className="text-gray-100">Answered</span>
                 </div>
-                <div className="flex items-center space-x-2">
-                  <div className="w-4 h-4 bg-red-500 rounded"></div>
-                  <span className="text-gray-700">Flagged</span>
+                <div className="flex items-center space-x-3">
+                  <div className="w-4 h-4 bg-red-500 rounded-full shadow-lg"></div>
+                  <span className="text-gray-100">Flagged</span>
                 </div>
-                <div className="flex items-center space-x-2">
-                  <div className="w-4 h-4 bg-blue-500 rounded"></div>
-                  <span className="text-gray-700">Current</span>
+                <div className="flex items-center space-x-3">
+                  <div className="w-4 h-4 bg-blue-500 rounded-full shadow-lg"></div>
+                  <span className="text-gray-100">Current</span>
                 </div>
-                <div className="flex items-center space-x-2">
-                  <div className="w-4 h-4 bg-gray-300 rounded"></div>
-                  <span className="text-gray-700">Not Visited</span>
+                <div className="flex items-center space-x-3">
+                  <div className="w-4 h-4 bg-gray-600 rounded-full"></div>
+                  <span className="text-gray-100">Not Visited</span>
                 </div>
               </div>
 
@@ -595,18 +480,26 @@ const TestInterface = ({ testConfig, onTestComplete, onBackToSelection }) => {
               <div className="grid grid-cols-5 gap-2">
                 {questions.map((_, index) => {
                   const status = getQuestionStatus(index);
-                  let bgColor = 'bg-gray-300';
+                  let bgColor = 'bg-gray-600 hover:bg-gray-500';
+                  let borderColor = 'border-gray-500';
                   
-                  if (status === 'answered') bgColor = 'bg-green-500';
-                  else if (status === 'flagged') bgColor = 'bg-red-500';
-                  else if (status === 'current') bgColor = 'bg-blue-500';
+                  if (status === 'answered') {
+                    bgColor = 'bg-green-500 hover:bg-green-400';
+                    borderColor = 'border-green-400';
+                  } else if (status === 'flagged') {
+                    bgColor = 'bg-red-500 hover:bg-red-400';
+                    borderColor = 'border-red-400';
+                  } else if (status === 'current') {
+                    bgColor = 'bg-blue-500 hover:bg-blue-400';
+                    borderColor = 'border-blue-400';
+                  }
 
                   return (
                     <button
                       key={index}
                       onClick={() => handleQuestionNavigation(index)}
                       disabled={!canMoveToNext}
-                      className={`w-8 h-8 ${bgColor} text-white font-bold text-sm rounded hover:opacity-80 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed`}
+                      className={`w-10 h-10 ${bgColor} border-2 ${borderColor} text-white font-bold text-sm rounded-xl transition-all duration-200 transform hover:scale-110 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg`}
                     >
                       {index + 1}
                     </button>
@@ -616,43 +509,54 @@ const TestInterface = ({ testConfig, onTestComplete, onBackToSelection }) => {
             </div>
           </div>
 
-          {/* Main Question Area */}
+          {/* Enhanced Main Question Area */}
           <div className="lg:col-span-3">
-            <div className="bg-white rounded-xl p-8">
+            <div className="bg-gray-800/50 backdrop-blur-xl rounded-2xl p-8 border border-gray-700/50">
               {currentQuestion && (
                 <>
                   {/* Question Header */}
-                  <div className="flex items-center justify-between mb-6">
-                    <div className="flex items-center space-x-3">
-                      <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center">
-                        <span className="text-white font-bold text-sm">{currentQuestionIndex + 1}</span>
+                  <div className="flex items-center justify-between mb-8">
+                    <div className="flex items-center space-x-4">
+                      <div className="w-12 h-12 bg-gradient-to-r from-blue-600 to-purple-600 rounded-full flex items-center justify-center">
+                        <span className="text-white font-bold text-lg">{currentQuestionIndex + 1}</span>
                       </div>
-                      <span className="text-gray-600 font-medium">
-                        Difficulty: <span className="font-bold text-gray-900">{currentQuestion.difficulty}</span>
-                      </span>
+                      <div>
+                        <div className="flex items-center space-x-3 mb-1">
+                          <span className={`px-3 py-1 rounded-full text-sm font-medium ${
+                            currentQuestion.difficulty === 'Easy' ? 'bg-green-500/20 text-green-400 border border-green-500/30' :
+                            currentQuestion.difficulty === 'Medium' ? 'bg-yellow-500/20 text-yellow-400 border border-yellow-500/30' :
+                            'bg-red-500/20 text-red-400 border border-red-500/30'
+                          }`}>
+                            {currentQuestion.difficulty}
+                          </span>
+                          <span className="text-gray-200 text-sm">
+                            {Math.floor(Math.random() * 3) + 2} marks
+                          </span>
+                        </div>
+                        <p className="text-gray-200 text-sm">Single Correct Answer</p>
+                      </div>
                     </div>
-                    <div className="flex items-center space-x-3">
-                      <button
-                        onClick={toggleFlag}
-                        className={`p-2 rounded-lg transition-colors ${
-                          flaggedQuestions.has(currentQuestion._id)
-                            ? 'bg-red-100 text-red-600'
-                            : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                        }`}
-                      >
-                        <Flag className="w-5 h-5" />
-                      </button>
-                    </div>
+                    
+                    <button
+                      onClick={toggleFlag}
+                      className={`p-3 rounded-xl transition-all duration-200 ${
+                        flaggedQuestions.has(currentQuestion._id)
+                          ? 'bg-red-500/20 text-red-400 border border-red-500/30'
+                          : 'bg-gray-700/50 text-gray-400 hover:bg-gray-600/50 border border-gray-600'
+                      }`}
+                    >
+                      <Flag className="w-5 h-5" />
+                    </button>
                   </div>
 
                   {/* Question Text */}
                   <div className="mb-8">
-                    <h2 className="text-xl font-bold text-gray-900 leading-relaxed">
+                    <h2 className="text-xl font-bold text-white leading-relaxed">
                       {currentQuestion.questionText}
                     </h2>
                   </div>
 
-                  {/* Answer Options */}
+                  {/* Enhanced Answer Options */}
                   <div className="space-y-4 mb-8">
                     {currentQuestion.options.map((option, index) => {
                       const isSelected = answers[currentQuestion._id] === index;
@@ -660,36 +564,43 @@ const TestInterface = ({ testConfig, onTestComplete, onBackToSelection }) => {
                         <div
                           key={index}
                           onClick={() => handleAnswerSelect(index)}
-                          className={`p-4 rounded-lg border-2 cursor-pointer transition-all duration-200 ${
+                          className={`group p-6 rounded-xl border-2 cursor-pointer transition-all duration-200 transform hover:scale-102 ${
                             isSelected
-                              ? 'border-blue-500 bg-blue-50'
-                              : 'border-gray-300 hover:border-gray-400 hover:bg-gray-50'
+                              ? 'border-blue-500 bg-blue-500/10 shadow-lg shadow-blue-500/20'
+                              : 'border-gray-600 bg-gray-700/30 hover:border-gray-500 hover:bg-gray-700/50'
                           }`}
                           style={{ userSelect: 'none' }}
                         >
-                          <div className="flex items-center space-x-3">
-                            <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center ${
+                          <div className="flex items-center space-x-4">
+                            <div className={`w-8 h-8 rounded-full border-2 flex items-center justify-center transition-all duration-200 ${
                               isSelected
                                 ? 'border-blue-500 bg-blue-500'
-                                : 'border-gray-400'
+                                : 'border-gray-500 group-hover:border-gray-400'
                             }`}>
-                              {isSelected && <div className="w-2 h-2 bg-white rounded-full"></div>}
+                              {isSelected && <div className="w-3 h-3 bg-white rounded-full"></div>}
                             </div>
-                            <span className="text-lg font-medium text-gray-900">
-                              {String.fromCharCode(65 + index)}. {option.text}
-                            </span>
+                            <div className="flex items-center space-x-3">
+                              <span className={`font-bold text-lg ${
+                                isSelected ? 'text-blue-400' : 'text-gray-100'
+                              }`}>
+                                {String.fromCharCode(65 + index)}.
+                              </span>
+                              <span className="text-lg font-medium text-white">
+                                {option.text}
+                              </span>
+                            </div>
                           </div>
                         </div>
                       );
                     })}
                   </div>
 
-                  {/* Navigation Buttons */}
+                  {/* Enhanced Navigation Buttons */}
                   <div className="flex justify-between items-center">
                     <button
                       onClick={handlePrevious}
                       disabled={currentQuestionIndex === 0 || !canMoveToNext}
-                      className="flex items-center space-x-2 px-6 py-3 bg-gray-600 hover:bg-gray-700 text-white rounded-lg font-medium disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                      className="flex items-center space-x-3 px-6 py-3 bg-gray-700 hover:bg-gray-600 text-white rounded-xl font-medium disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
                     >
                       <ArrowLeft className="w-5 h-5" />
                       <span>Previous</span>
@@ -698,33 +609,26 @@ const TestInterface = ({ testConfig, onTestComplete, onBackToSelection }) => {
                     <div className="flex items-center space-x-3">
                       <button
                         onClick={() => handleAnswerSelect(-1)}
-                        className="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg font-medium transition-colors"
+                        className="px-6 py-3 bg-gray-600 hover:bg-gray-500 text-white rounded-xl font-medium transition-all duration-200"
                       >
-                        Clear Answer
+                        Clear
                       </button>
                       <button
                         onClick={toggleFlag}
-                        className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+                        className={`px-6 py-3 rounded-xl font-medium transition-all duration-200 ${
                           flaggedQuestions.has(currentQuestion._id)
-                            ? 'bg-red-100 text-red-600 hover:bg-red-200'
-                            : 'bg-yellow-100 text-yellow-700 hover:bg-yellow-200'
+                            ? 'bg-red-600 hover:bg-red-700 text-white'
+                            : 'bg-yellow-600 hover:bg-yellow-700 text-white'
                         }`}
                       >
-                        {flaggedQuestions.has(currentQuestion._id) ? 'Unflag' : 'Flag'} Question
-                      </button>
-                      <button
-                        onClick={() => setCanMoveToNext(true)}
-                        disabled={canMoveToNext}
-                        className="px-4 py-2 bg-blue-100 text-blue-700 rounded-lg font-medium disabled:opacity-50 disabled:cursor-not-allowed"
-                      >
-                        Skip Question
+                        {flaggedQuestions.has(currentQuestion._id) ? 'Unflag' : 'Flag'}
                       </button>
                     </div>
 
                     <button
                       onClick={handleNext}
                       disabled={currentQuestionIndex === questions.length - 1 || !canMoveToNext}
-                      className="flex items-center space-x-2 px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                      className="flex items-center space-x-3 px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-medium disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
                     >
                       <span>Next</span>
                       <ArrowRight className="w-5 h-5" />
@@ -737,42 +641,41 @@ const TestInterface = ({ testConfig, onTestComplete, onBackToSelection }) => {
         </div>
       </div>
 
-      {/* Submit Confirmation Modal */}
+      {/* Enhanced Submit Modal */}
       {showSubmitModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-xl p-8 max-w-md mx-4">
+        <div className="fixed inset-0 bg-black/75 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-gray-800 rounded-2xl p-8 max-w-md mx-auto border border-gray-700 shadow-2xl">
             <div className="text-center">
-              <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <Send className="w-8 h-8 text-green-600" />
+              <div className="w-20 h-20 bg-gradient-to-r from-green-500 to-emerald-500 rounded-full flex items-center justify-center mx-auto mb-6">
+                <Send className="w-10 h-10 text-white" />
               </div>
-              <h3 className="text-xl font-bold text-gray-900 mb-2">Submit Test?</h3>
-              <p className="text-gray-600 mb-4">
-                You have answered {getAnsweredCount()} out of {questions.length} questions. 
-                Are you sure you want to submit your test?
+              <h3 className="text-2xl font-bold text-white mb-4">Submit Test?</h3>
+              <p className="text-gray-100 mb-4">
+                You have answered <span className="font-bold text-green-400">{getAnsweredCount()}</span> out of <span className="font-bold">{questions.length}</span> questions.
               </p>
               {tabSwitchCount > 0 && (
-                <div className="bg-yellow-100 border border-yellow-400 rounded-lg p-3 mb-4">
-                  <p className="text-yellow-700 text-sm">
-                    ⚠️ Warning: {tabSwitchCount} suspicious activities detected during the test.
+                <div className="bg-yellow-500/10 border border-yellow-500/20 rounded-xl p-4 mb-6">
+                  <p className="text-yellow-400 text-sm">
+                    ⚠️ {tabSwitchCount} security warnings detected during the test.
                   </p>
                 </div>
               )}
-              <div className="flex space-x-3">
+              <div className="flex space-x-4">
                 <button
                   onClick={() => setShowSubmitModal(false)}
                   disabled={submitting}
-                  className="flex-1 px-4 py-2 bg-gray-300 hover:bg-gray-400 text-gray-700 rounded-lg font-medium transition-colors"
+                  className="flex-1 px-6 py-3 bg-gray-600 hover:bg-gray-700 text-white rounded-xl font-medium transition-all duration-200"
                 >
                   Cancel
                 </button>
                 <button
                   onClick={submitTestAnswers}
                   disabled={submitting}
-                  className="flex-1 px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg font-medium transition-colors flex items-center justify-center space-x-2"
+                  className="flex-1 px-6 py-3 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white rounded-xl font-medium transition-all duration-200 flex items-center justify-center space-x-2"
                 >
                   {submitting ? (
                     <>
-                      <Loader className="w-4 h-4 animate-spin" />
+                      <Loader className="w-5 h-5 animate-spin" />
                       <span>Submitting...</span>
                     </>
                   ) : (
@@ -788,7 +691,7 @@ const TestInterface = ({ testConfig, onTestComplete, onBackToSelection }) => {
   );
 };
 
-// Test Selection Flow Component (Previous code remains the same)
+// Enhanced Test Selection Flow Component
 const TestSelectionFlow = ({ onStartTest }) => {
   const [currentStep, setCurrentStep] = useState(1);
   const [loading, setLoading] = useState(false);
@@ -851,15 +754,25 @@ const TestSelectionFlow = ({ onStartTest }) => {
     try {
       setLoading(true);
       setError('');
+      
+      console.log('Fetching topics for subject IDs:', subjectIds);
+      
       const response = await fetch(`${API_BASE}/topics/subjects`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ subjectIds })
       });
+      
+      console.log('Response status:', response.status);
+      
       if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+        const errorText = await response.text();
+        console.error('Response error:', errorText);
+        throw new Error(`HTTP error! status: ${response.status} - ${errorText}`);
       }
+      
       const data = await response.json();
+      console.log('Topics received:', data);
       setTopics(data || []);
     } catch (error) {
       console.error('Error fetching topics:', error);
@@ -928,33 +841,33 @@ const TestSelectionFlow = ({ onStartTest }) => {
   };
 
   const renderStepIndicator = () => (
-    <div className="flex items-center justify-center mb-12">
+    <div className="flex items-center justify-center mb-16">
       {[
-        { step: 1, label: 'Stream' },
-        { step: 2, label: 'Subjects' },
-        { step: 3, label: 'Topics' },
-        { step: 4, label: 'Configure' }
-      ].map(({ step, label }, index) => (
+        { step: 1, label: 'Stream', icon: BookOpen },
+        { step: 2, label: 'Subjects', icon: Target },
+        { step: 3, label: 'Topics', icon: Lightbulb },
+        { step: 4, label: 'Configure', icon: Settings }
+      ].map(({ step, label, icon: Icon }, index) => (
         <div key={step} className="flex items-center">
           <div className="text-center">
-            <div className={`w-12 h-12 rounded-full flex items-center justify-center font-bold text-lg transition-all duration-300 ${
+            <div className={`w-16 h-16 rounded-2xl flex items-center justify-center font-bold text-lg transition-all duration-500 ${
               step <= currentStep 
-                ? 'bg-blue-600 text-white shadow-lg' 
-                : 'bg-gray-600 text-white border-2 border-gray-400'
+                ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-lg shadow-blue-500/25' 
+                : 'bg-gray-700 text-gray-400 border-2 border-gray-600'
             }`}>
               {step <= currentStep ? (
-                step < currentStep ? <CheckCircle className="w-6 h-6 text-white" /> : step
-              ) : step}
+                step < currentStep ? <CheckCircle className="w-8 h-8 text-white" /> : <Icon className="w-8 h-8" />
+              ) : <Icon className="w-8 h-8" />}
             </div>
-            <p className={`mt-2 text-sm font-bold ${
-              step <= currentStep ? 'text-blue-400' : 'text-white'
+            <p className={`mt-3 text-sm font-bold transition-all duration-300 ${
+              step <= currentStep ? 'text-blue-400' : 'text-gray-400'
             }`}>
               {label}
             </p>
           </div>
           {index < 3 && (
-            <div className={`w-20 h-1 mx-4 rounded-full transition-all duration-300 ${
-              step < currentStep ? 'bg-blue-600' : 'bg-gray-600'
+            <div className={`w-24 h-1 mx-6 rounded-full transition-all duration-500 ${
+              step < currentStep ? 'bg-gradient-to-r from-blue-600 to-purple-600' : 'bg-gray-700'
             }`} />
           )}
         </div>
@@ -965,8 +878,8 @@ const TestSelectionFlow = ({ onStartTest }) => {
   const renderStreamSelection = () => {
     if (loading) {
       return (
-        <div className="flex flex-col justify-center items-center h-64 space-y-4">
-          <Loader className="w-12 h-12 text-blue-400 animate-spin" />
+        <div className="flex flex-col justify-center items-center h-64 space-y-6">
+          <div className="w-16 h-16 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin"></div>
           <p className="text-blue-400 font-bold text-2xl">Loading streams...</p>
         </div>
       );
@@ -974,15 +887,15 @@ const TestSelectionFlow = ({ onStartTest }) => {
 
     if (error) {
       return (
-        <div className="bg-red-600 border-4 border-red-800 rounded-xl p-8 max-w-md mx-auto">
+        <div className="bg-red-500/10 border border-red-500/20 rounded-2xl p-8 max-w-md mx-auto">
           <div className="flex items-center space-x-3 mb-4">
-            <AlertCircle className="w-8 h-8 text-white" />
-            <h3 className="text-white font-bold text-xl">Error</h3>
+            <AlertCircle className="w-8 h-8 text-red-400" />
+            <h3 className="text-red-400 font-bold text-xl">Error</h3>
           </div>
-          <p className="text-white font-medium mb-4">{error}</p>
+          <p className="text-red-300 font-medium mb-6">{error}</p>
           <button
             onClick={fetchStreams}
-            className="px-6 py-3 bg-white text-red-600 rounded-lg font-bold hover:bg-gray-100"
+            className="w-full px-6 py-3 bg-red-600 hover:bg-red-700 text-white rounded-xl font-bold transition-all duration-200"
           >
             Retry
           </button>
@@ -991,27 +904,31 @@ const TestSelectionFlow = ({ onStartTest }) => {
     }
 
     return (
-      <div className="space-y-8">
+      <div className="space-y-12">
         <div className="text-center">
-          <h2 className="text-5xl font-black text-white mb-6 drop-shadow-lg">
+          <h2 className="text-6xl font-black text-white mb-6 bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400 bg-clip-text text-transparent">
             Choose Your Stream
           </h2>
-          <p className="text-2xl font-bold text-gray-300">Select the competitive exam you want to practice for</p>
+          <p className="text-2xl font-bold text-gray-100">Select the competitive exam you want to practice for</p>
         </div>
         
         <div className="text-center mb-8">
-          <p className="text-xl font-bold text-green-400">
-            ✅ Found {streams.length} streams in database
-          </p>
+          <div className="inline-flex items-center px-6 py-3 bg-green-500/10 border border-green-500/20 rounded-full">
+            <CheckCircle className="w-5 h-5 text-green-400 mr-2" />
+            <span className="text-green-400 font-bold">
+              Found {streams.length} streams in database
+            </span>
+          </div>
         </div>
         
         {streams.length === 0 ? (
-          <div className="text-center py-12">
-            <p className="text-3xl font-black text-red-400">⚠️ No streams available</p>
-            <p className="text-xl font-bold text-white mt-4">Make sure your backend is running and seeded</p>
+          <div className="text-center py-16">
+            <AlertCircle className="w-20 h-20 text-red-400 mx-auto mb-6" />
+            <p className="text-3xl font-black text-red-400 mb-4">No streams available</p>
+            <p className="text-xl font-bold text-gray-100 mb-8">Make sure your backend is running and seeded</p>
             <button
               onClick={fetchStreams}
-              className="mt-6 px-8 py-4 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-black text-lg"
+              className="px-10 py-4 bg-blue-600 hover:bg-blue-700 text-white rounded-2xl font-black text-lg transition-all duration-200 transform hover:scale-105"
             >
               Retry Loading
             </button>
@@ -1022,26 +939,28 @@ const TestSelectionFlow = ({ onStartTest }) => {
               <div
                 key={stream._id || index}
                 onClick={() => handleStreamSelect(stream)}
-                className="bg-white rounded-2xl p-8 cursor-pointer hover:bg-blue-50 transition-all duration-300 border-4 border-gray-800 hover:border-blue-600 transform hover:scale-105 shadow-2xl"
-                style={{ minHeight: '200px' }}
+                className="group bg-gray-800/50 backdrop-blur-xl rounded-2xl p-8 cursor-pointer hover:bg-gray-700/50 transition-all duration-300 border-2 border-gray-700 hover:border-blue-500 transform hover:scale-105 shadow-xl hover:shadow-2xl hover:shadow-blue-500/25"
+                style={{ minHeight: '280px' }}
               >
-                <div className="flex flex-col items-center text-center space-y-4">
-                  <div className="w-20 h-20 bg-blue-600 rounded-full flex items-center justify-center">
+                <div className="flex flex-col items-center text-center space-y-6 h-full">
+                  <div className="w-20 h-20 bg-gradient-to-r from-blue-600 to-purple-600 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
                     <BookOpen className="w-10 h-10 text-white" />
                   </div>
                   
-                  <div className="w-full">
-                    <h3 className="text-3xl font-black text-gray-900 mb-3">
+                  <div className="flex-1">
+                    <h3 className="text-3xl font-black text-white mb-4 group-hover:text-blue-400 transition-colors duration-300">
                       {stream.name || `Stream ${index + 1}`}
                     </h3>
-                    <p className="text-lg font-bold text-gray-700 leading-relaxed">
+                    <p className="text-lg font-medium text-gray-100 leading-relaxed">
                       {stream.description || 'No description available'}
                     </p>
                   </div>
                   
-                  <div className="flex items-center justify-center w-full pt-4 border-t-2 border-gray-300">
-                    <span className="text-blue-600 font-black text-lg mr-3">Click to select</span>
-                    <ArrowRight className="w-6 h-6 text-blue-600" />
+                  <div className="flex items-center justify-center w-full pt-4 border-t border-gray-600">
+                    <div className="flex items-center space-x-3 text-blue-400 group-hover:text-blue-300 transition-colors duration-300">
+                      <span className="font-black text-lg">Select Stream</span>
+                      <ArrowRight className="w-6 h-6 group-hover:translate-x-1 transition-transform duration-300" />
+                    </div>
                   </div>
                 </div>
               </div>
@@ -1055,8 +974,8 @@ const TestSelectionFlow = ({ onStartTest }) => {
   const renderSubjectSelection = () => {
     if (loading) {
       return (
-        <div className="flex flex-col justify-center items-center h-64 space-y-4">
-          <Loader className="w-12 h-12 text-blue-400 animate-spin" />
+        <div className="flex flex-col justify-center items-center h-64 space-y-6">
+          <div className="w-16 h-16 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin"></div>
           <p className="text-blue-400 font-bold text-2xl">Loading subjects...</p>
         </div>
       );
@@ -1064,15 +983,15 @@ const TestSelectionFlow = ({ onStartTest }) => {
 
     if (error) {
       return (
-        <div className="bg-red-600 border-4 border-red-800 rounded-xl p-8 max-w-md mx-auto">
+        <div className="bg-red-500/10 border border-red-500/20 rounded-2xl p-8 max-w-md mx-auto">
           <div className="flex items-center space-x-3 mb-4">
-            <AlertCircle className="w-8 h-8 text-white" />
-            <h3 className="text-white font-bold text-xl">Error</h3>
+            <AlertCircle className="w-8 h-8 text-red-400" />
+            <h3 className="text-red-400 font-bold text-xl">Error</h3>
           </div>
-          <p className="text-white font-medium mb-4">{error}</p>
+          <p className="text-red-300 font-medium mb-6">{error}</p>
           <button
             onClick={() => fetchSubjects(selectedStream._id)}
-            className="px-6 py-3 bg-white text-red-600 rounded-lg font-bold hover:bg-gray-100"
+            className="w-full px-6 py-3 bg-red-600 hover:bg-red-700 text-white rounded-xl font-bold transition-all duration-200"
           >
             Retry
           </button>
@@ -1081,38 +1000,45 @@ const TestSelectionFlow = ({ onStartTest }) => {
     }
 
     return (
-      <div className="space-y-8">
+      <div className="space-y-12">
         <div className="text-center">
-          <h2 className="text-5xl font-black text-white mb-6">Select Subjects</h2>
-          <p className="text-2xl font-bold text-gray-300">
+          <h2 className="text-6xl font-black text-white mb-6 bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400 bg-clip-text text-transparent">
+            Select Subjects
+          </h2>
+          <p className="text-2xl font-bold text-gray-100 mb-6">
             Choose subjects for <span className="text-blue-400 font-black">{selectedStream?.name}</span> examination
           </p>
-          <div className="mt-6 inline-flex items-center px-6 py-3 bg-blue-600 rounded-full">
-            <span className="text-white text-lg font-bold">
+          <div className="inline-flex items-center px-8 py-4 bg-blue-600/20 border border-blue-500/30 rounded-2xl">
+            <Target className="w-6 h-6 text-blue-400 mr-3" />
+            <span className="text-blue-400 text-xl font-bold">
               {selectedSubjects.length} subjects selected
             </span>
           </div>
         </div>
 
         <div className="text-center mb-8">
-          <p className="text-xl font-bold text-green-400">
-            ✅ Found {subjects.length} subjects for {selectedStream?.name}
-          </p>
+          <div className="inline-flex items-center px-6 py-3 bg-green-500/10 border border-green-500/20 rounded-full">
+            <CheckCircle className="w-5 h-5 text-green-400 mr-2" />
+            <span className="text-green-400 font-bold">
+              Found {subjects.length} subjects for {selectedStream?.name}
+            </span>
+          </div>
         </div>
 
         {subjects.length === 0 ? (
-          <div className="text-center py-12">
-            <p className="text-3xl font-black text-red-400">⚠️ No subjects available</p>
-            <p className="text-xl font-bold text-white mt-4">No subjects found for this stream</p>
+          <div className="text-center py-16">
+            <AlertCircle className="w-20 h-20 text-red-400 mx-auto mb-6" />
+            <p className="text-3xl font-black text-red-400 mb-4">No subjects available</p>
+            <p className="text-xl font-bold text-gray-300 mb-8">No subjects found for this stream</p>
             <button
               onClick={() => fetchSubjects(selectedStream._id)}
-              className="mt-6 px-8 py-4 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-black text-lg"
+              className="px-10 py-4 bg-blue-600 hover:bg-blue-700 text-white rounded-2xl font-black text-lg transition-all duration-200 transform hover:scale-105"
             >
               Retry Loading
             </button>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-6xl mx-auto">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-6xl mx-auto">
             {subjects.map((subject, index) => {
               const isSelected = selectedSubjects.find(s => s._id === subject._id);
               
@@ -1120,28 +1046,28 @@ const TestSelectionFlow = ({ onStartTest }) => {
                 <div
                   key={subject._id || index}
                   onClick={() => handleSubjectToggle(subject)}
-                  className={`p-8 rounded-2xl border-4 cursor-pointer transition-all duration-300 transform hover:scale-105 ${
+                  className={`group p-8 rounded-2xl border-2 cursor-pointer transition-all duration-300 transform hover:scale-105 ${
                     isSelected
-                      ? 'bg-blue-100 border-blue-600 shadow-2xl shadow-blue-500/50'
-                      : 'bg-white border-gray-400 hover:border-blue-600 shadow-xl'
+                      ? 'bg-blue-600/20 border-blue-500 shadow-xl shadow-blue-500/25'
+                      : 'bg-gray-800/50 border-gray-600 hover:border-gray-500 shadow-xl'
                   }`}
-                  style={{ minHeight: '150px' }}
+                  style={{ minHeight: '200px' }}
                 >
                   <div className="flex items-center justify-between h-full">
                     <div className="flex-1">
-                      <h3 className={`font-black text-2xl mb-2 ${
-                        isSelected ? 'text-blue-800' : 'text-gray-900'
+                      <h3 className={`font-black text-2xl mb-3 transition-colors duration-300 ${
+                        isSelected ? 'text-blue-300' : 'text-white group-hover:text-blue-400'
                       }`}>
                         {subject.name || `Subject ${index + 1}`}
                       </h3>
                       {subject.description && (
-                        <p className="text-gray-700 font-medium text-base">{subject.description}</p>
+                        <p className="text-gray-100 font-medium text-base">{subject.description}</p>
                       )}
                     </div>
-                    <div className={`w-8 h-8 rounded-full border-4 flex items-center justify-center ml-4 ${
+                    <div className={`w-10 h-10 rounded-full border-2 flex items-center justify-center ml-6 transition-all duration-300 ${
                       isSelected 
-                        ? 'bg-blue-600 border-blue-600' 
-                        : 'border-gray-400'
+                        ? 'bg-blue-600 border-blue-600 scale-110' 
+                        : 'border-gray-500 group-hover:border-gray-400'
                     }`}>
                       {isSelected && <CheckCircle className="w-6 h-6 text-white" />}
                     </div>
@@ -1155,7 +1081,7 @@ const TestSelectionFlow = ({ onStartTest }) => {
         <div className="flex justify-between max-w-6xl mx-auto pt-8">
           <button
             onClick={() => setCurrentStep(1)}
-            className="flex items-center space-x-3 px-8 py-4 bg-gray-600 hover:bg-gray-700 text-white rounded-xl font-bold text-lg"
+            className="flex items-center space-x-3 px-8 py-4 bg-gray-700 hover:bg-gray-600 text-white rounded-2xl font-bold text-lg transition-all duration-200"
           >
             <ChevronLeft className="w-6 h-6" />
             <span>Back</span>
@@ -1163,7 +1089,7 @@ const TestSelectionFlow = ({ onStartTest }) => {
           <button
             onClick={handleSubjectsNext}
             disabled={selectedSubjects.length === 0}
-            className="flex items-center space-x-3 px-8 py-4 bg-blue-600 hover:bg-blue-700 text-white rounded-xl disabled:opacity-50 disabled:cursor-not-allowed font-bold text-lg shadow-lg"
+            className="flex items-center space-x-3 px-8 py-4 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white rounded-2xl disabled:opacity-50 disabled:cursor-not-allowed font-bold text-lg shadow-lg transition-all duration-200 transform hover:scale-105"
           >
             <span>Next ({selectedSubjects.length} selected)</span>
             <ChevronRight className="w-6 h-6" />
@@ -1176,8 +1102,8 @@ const TestSelectionFlow = ({ onStartTest }) => {
   const renderTopicSelection = () => {
     if (loading) {
       return (
-        <div className="flex flex-col justify-center items-center h-64 space-y-4">
-          <Loader className="w-12 h-12 text-blue-400 animate-spin" />
+        <div className="flex flex-col justify-center items-center h-64 space-y-6">
+          <div className="w-16 h-16 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin"></div>
           <p className="text-blue-400 font-bold text-2xl">Loading topics...</p>
         </div>
       );
@@ -1185,15 +1111,15 @@ const TestSelectionFlow = ({ onStartTest }) => {
 
     if (error) {
       return (
-        <div className="bg-red-600 border-4 border-red-800 rounded-xl p-8 max-w-md mx-auto">
+        <div className="bg-red-500/10 border border-red-500/20 rounded-2xl p-8 max-w-md mx-auto">
           <div className="flex items-center space-x-3 mb-4">
-            <AlertCircle className="w-8 h-8 text-white" />
-            <h3 className="text-white font-bold text-xl">Error</h3>
+            <AlertCircle className="w-8 h-8 text-red-400" />
+            <h3 className="text-red-400 font-bold text-xl">Error</h3>
           </div>
-          <p className="text-white font-medium mb-4">{error}</p>
+          <p className="text-red-300 font-medium mb-6">{error}</p>
           <button
             onClick={() => fetchTopics(selectedSubjects.map(s => s._id))}
-            className="px-6 py-3 bg-white text-red-600 rounded-lg font-bold hover:bg-gray-100"
+            className="w-full px-6 py-3 bg-red-600 hover:bg-red-700 text-white rounded-xl font-bold transition-all duration-200"
           >
             Retry
           </button>
@@ -1202,52 +1128,56 @@ const TestSelectionFlow = ({ onStartTest }) => {
     }
 
     return (
-      <div className="space-y-8">
+      <div className="space-y-12">
         <div className="text-center">
-          <h2 className="text-5xl font-black text-white mb-6">Select Topics</h2>
-          <p className="text-2xl font-bold text-gray-300">
+          <h2 className="text-6xl font-black text-white mb-6 bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400 bg-clip-text text-transparent">
+            Select Topics
+          </h2>
+          <p className="text-2xl font-bold text-gray-100 mb-6">
             Choose specific topics from {selectedSubjects.map(s => s.name).join(', ')}
           </p>
         </div>
 
         <div className="flex justify-between items-center max-w-6xl mx-auto">
-          <div className="px-6 py-3 bg-blue-600 rounded-lg">
-            <span className="text-white font-bold text-lg">
+          <div className="flex items-center px-8 py-4 bg-blue-600/20 border border-blue-500/30 rounded-2xl">
+            <Lightbulb className="w-6 h-6 text-blue-400 mr-3" />
+            <span className="text-blue-400 font-bold text-xl">
               {selectedTopics.length} of {topics.length} topics selected
             </span>
           </div>
           <button
             onClick={handleSelectAllTopics}
-            className="px-8 py-3 bg-green-600 hover:bg-green-700 text-white rounded-lg font-bold text-lg"
+            className="px-8 py-4 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white rounded-2xl font-bold text-lg transition-all duration-200 transform hover:scale-105"
           >
             {selectedTopics.length === topics.length ? 'Deselect All' : 'Select All'}
           </button>
         </div>
 
         {topics.length === 0 ? (
-          <div className="text-center py-12">
-            <p className="text-3xl font-black text-red-400">⚠️ No topics available</p>
-            <p className="text-xl font-bold text-white mt-4">No topics found for selected subjects</p>
+          <div className="text-center py-16">
+            <AlertCircle className="w-20 h-20 text-red-400 mx-auto mb-6" />
+            <p className="text-3xl font-black text-red-400 mb-4">No topics available</p>
+            <p className="text-xl font-bold text-gray-100">No topics found for selected subjects</p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 max-w-6xl mx-auto">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 max-w-6xl mx-auto">
             {topics.map((topic, index) => {
               const isSelected = selectedTopics.find(t => t._id === topic._id);
               return (
                 <div
                   key={topic._id || index}
                   onClick={() => handleTopicToggle(topic)}
-                  className={`p-6 rounded-xl border-3 cursor-pointer transition-all duration-300 hover:scale-105 ${
+                  className={`group p-6 rounded-xl border-2 cursor-pointer transition-all duration-300 hover:scale-105 ${
                     isSelected
-                      ? 'bg-blue-100 border-blue-600 text-blue-800'
-                      : 'bg-white border-gray-400 text-gray-900 hover:border-blue-600'
+                      ? 'bg-blue-600/20 border-blue-500 text-blue-300 shadow-lg shadow-blue-500/25'
+                      : 'bg-gray-800/50 border-gray-600 text-white hover:border-gray-500'
                   }`}
                 >
                   <div className="flex items-center justify-between">
                     <span className="font-bold text-lg">
                       {topic.name || `Topic ${index + 1}`}
                     </span>
-                    <div className={`w-6 h-6 rounded border-2 flex items-center justify-center ${
+                    <div className={`w-6 h-6 rounded border-2 flex items-center justify-center transition-all duration-300 ${
                       isSelected ? 'bg-blue-600 border-blue-600' : 'border-gray-500'
                     }`}>
                       {isSelected && <CheckCircle className="w-4 h-4 text-white" />}
@@ -1262,7 +1192,7 @@ const TestSelectionFlow = ({ onStartTest }) => {
         <div className="flex justify-between max-w-6xl mx-auto pt-8">
           <button
             onClick={() => setCurrentStep(2)}
-            className="flex items-center space-x-3 px-8 py-4 bg-gray-600 hover:bg-gray-700 text-white rounded-xl font-bold text-lg"
+            className="flex items-center space-x-3 px-8 py-4 bg-gray-700 hover:bg-gray-600 text-white rounded-2xl font-bold text-lg transition-all duration-200"
           >
             <ChevronLeft className="w-6 h-6" />
             <span>Back</span>
@@ -1270,7 +1200,7 @@ const TestSelectionFlow = ({ onStartTest }) => {
           <button
             onClick={handleTopicsNext}
             disabled={selectedTopics.length === 0}
-            className="flex items-center space-x-3 px-8 py-4 bg-blue-600 hover:bg-blue-700 text-white rounded-xl disabled:opacity-50 disabled:cursor-not-allowed font-bold text-lg shadow-lg"
+            className="flex items-center space-x-3 px-8 py-4 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white rounded-2xl disabled:opacity-50 disabled:cursor-not-allowed font-bold text-lg shadow-lg transition-all duration-200 transform hover:scale-105"
           >
             <span>Configure Test ({selectedTopics.length} topics)</span>
             <ChevronRight className="w-6 h-6" />
@@ -1281,119 +1211,127 @@ const TestSelectionFlow = ({ onStartTest }) => {
   };
 
   const renderTestConfiguration = () => (
-    <div className="space-y-8">
+    <div className="space-y-12">
       <div className="text-center">
-        <h2 className="text-5xl font-black text-white mb-6">Configure Your Test</h2>
-        <p className="text-2xl font-bold text-gray-300">Set the number of questions and difficulty level</p>
+        <h2 className="text-6xl font-black text-white mb-6 bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400 bg-clip-text text-transparent">
+          Configure Your Test
+        </h2>
+        <p className="text-2xl font-bold text-gray-100 mb-8">Set the number of questions and difficulty level</p>
         
-        {/* Security Notice */}
-        <div className="mt-6 max-w-2xl mx-auto bg-blue-900/20 border border-blue-500 rounded-xl p-4">
-          <div className="flex items-center justify-center space-x-2 mb-2">
-            <Shield className="w-5 h-5 text-blue-400" />
-            <span className="text-blue-400 font-bold">Secure Testing Environment</span>
+        {/* Enhanced Security Notice */}
+        <div className="max-w-3xl mx-auto bg-gradient-to-r from-blue-600/10 to-purple-600/10 border border-blue-500/30 rounded-2xl p-8">
+          <div className="flex items-center justify-center space-x-3 mb-4">
+            <Shield className="w-8 h-8 text-blue-400" />
+            <span className="text-blue-400 font-bold text-xl">Secure Testing Environment</span>
           </div>
-          <p className="text-blue-300 text-sm">
-            Once started, this test will run in fullscreen mode. Tab switching and copying will be monitored for security.
+          <p className="text-blue-100 text-lg leading-relaxed">
+            Once started, this test will run in fullscreen mode. Tab switching, copying, and other activities will be monitored for security.
           </p>
         </div>
       </div>
 
-      <div className="max-w-4xl mx-auto">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
-          <div className="space-y-4">
-            <label className="block text-white font-black text-2xl">Number of Questions</label>
+      <div className="max-w-5xl mx-auto">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-12">
+          <div className="bg-gray-800/50 backdrop-blur-xl rounded-2xl p-8 border border-gray-700/50">
+            <label className="block text-white font-black text-2xl mb-6 flex items-center">
+              <Target className="w-6 h-6 mr-3 text-blue-400" />
+              Number of Questions
+            </label>
             <select
               value={testConfig.numQuestions}
               onChange={(e) => setTestConfig({...testConfig, numQuestions: parseInt(e.target.value)})}
-              className="w-full p-6 bg-white border-4 border-gray-600 rounded-xl text-gray-900 font-bold text-xl focus:border-blue-600"
+              className="w-full p-6 bg-gray-700 border-2 border-gray-600 rounded-xl text-white font-bold text-xl focus:border-blue-500 focus:outline-none transition-all duration-200"
             >
-              <option value={10}>10 Questions (Quick)</option>
-              <option value={20}>20 Questions (Standard)</option>
-              <option value={30}>30 Questions (Medium)</option>
-              <option value={50}>50 Questions (Long)</option>
-              <option value={100}>100 Questions (Full)</option>
+              <option value={10}>10 Questions (Quick - 15 mins)</option>
+              <option value={20}>20 Questions (Standard - 30 mins)</option>
+              <option value={30}>30 Questions (Medium - 45 mins)</option>
+              <option value={50}>50 Questions (Long - 75 mins)</option>
+              <option value={100}>100 Questions (Full - 150 mins)</option>
             </select>
           </div>
 
-          <div className="space-y-4">
-            <label className="block text-white font-black text-2xl">Difficulty Level</label>
+          <div className="bg-gray-800/50 backdrop-blur-xl rounded-2xl p-8 border border-gray-700/50">
+            <label className="block text-white font-black text-2xl mb-6 flex items-center">
+              <BarChart3 className="w-6 h-6 mr-3 text-purple-400" />
+              Difficulty Level
+            </label>
             <select
               value={testConfig.difficulty}
               onChange={(e) => setTestConfig({...testConfig, difficulty: e.target.value})}
-              className="w-full p-6 bg-white border-4 border-gray-600 rounded-xl text-gray-900 font-bold text-xl focus:border-blue-600"
+              className="w-full p-6 bg-gray-700 border-2 border-gray-600 rounded-xl text-white font-bold text-xl focus:border-blue-500 focus:outline-none transition-all duration-200"
             >
-              <option value="Easy">🟢 Easy</option>
-              <option value="Medium">🟡 Medium</option>
-              <option value="Hard">🔴 Hard</option>
-              <option value="Mixed">🎯 Mixed (All Levels)</option>
+              <option value="Easy">🟢 Easy - Beginner Level</option>
+              <option value="Medium">🟡 Medium - Intermediate</option>
+              <option value="Hard">🔴 Hard - Advanced</option>
+              <option value="Mixed">🎯 Mixed - All Levels</option>
             </select>
           </div>
         </div>
 
-        <div className="bg-white p-10 rounded-2xl border-4 border-gray-600 shadow-2xl">
+        <div className="bg-gradient-to-r from-gray-800/50 to-gray-700/50 backdrop-blur-xl rounded-2xl p-10 border border-gray-700/50 shadow-2xl">
           <div className="flex items-center space-x-4 mb-8">
-            <div className="w-12 h-12 bg-blue-600 rounded-lg flex items-center justify-center">
-              <Trophy className="w-8 h-8 text-white" />
+            <div className="w-16 h-16 bg-gradient-to-r from-blue-600 to-purple-600 rounded-2xl flex items-center justify-center">
+              <Trophy className="w-10 h-10 text-white" />
             </div>
-            <h3 className="text-3xl font-black text-gray-900">Test Summary</h3>
+            <h3 className="text-4xl font-black text-white">Test Summary</h3>
           </div>
           
-          <div className="grid grid-cols-2 gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             <div className="space-y-6">
-              <div className="flex justify-between items-center">
-                <span className="text-gray-700 font-bold text-lg">Stream:</span>
-                <span className="text-blue-600 font-black text-lg">{selectedStream?.name}</span>
+              <div className="flex justify-between items-center p-4 bg-gray-700/30 rounded-xl">
+                <span className="text-gray-100 font-bold text-lg">Stream:</span>
+                <span className="text-blue-400 font-black text-lg">{selectedStream?.name}</span>
               </div>
-              <div className="flex justify-between items-center">
-                <span className="text-gray-700 font-bold text-lg">Subjects:</span>
-                <span className="text-gray-900 font-black text-lg">{selectedSubjects.length}</span>
+              <div className="flex justify-between items-center p-4 bg-gray-700/30 rounded-xl">
+                <span className="text-gray-100 font-bold text-lg">Subjects:</span>
+                <span className="text-white font-black text-lg">{selectedSubjects.length}</span>
               </div>
-              <div className="flex justify-between items-center">
-                <span className="text-gray-700 font-bold text-lg">Topics:</span>
-                <span className="text-gray-900 font-black text-lg">{selectedTopics.length}</span>
+              <div className="flex justify-between items-center p-4 bg-gray-700/30 rounded-xl">
+                <span className="text-gray-100 font-bold text-lg">Topics:</span>
+                <span className="text-white font-black text-lg">{selectedTopics.length}</span>
               </div>
             </div>
             
             <div className="space-y-6">
-              <div className="flex justify-between items-center">
-                <span className="text-gray-700 font-bold text-lg">Questions:</span>
-                <span className="text-blue-600 font-black text-lg">{testConfig.numQuestions}</span>
+              <div className="flex justify-between items-center p-4 bg-gray-700/30 rounded-xl">
+                <span className="text-gray-100 font-bold text-lg">Questions:</span>
+                <span className="text-blue-400 font-black text-lg">{testConfig.numQuestions}</span>
               </div>
-              <div className="flex justify-between items-center">
-                <span className="text-gray-700 font-bold text-lg">Difficulty:</span>
-                <span className="text-gray-900 font-black text-lg">{testConfig.difficulty}</span>
+              <div className="flex justify-between items-center p-4 bg-gray-700/30 rounded-xl">
+                <span className="text-gray-100 font-bold text-lg">Difficulty:</span>
+                <span className="text-white font-black text-lg">{testConfig.difficulty}</span>
               </div>
-              <div className="flex justify-between items-center">
-                <span className="text-gray-700 font-bold text-lg">Time Limit:</span>
-                <span className="text-orange-600 font-black text-lg">{Math.ceil(testConfig.numQuestions * 1.5)} minutes</span>
+              <div className="flex justify-between items-center p-4 bg-gray-700/30 rounded-xl">
+                <span className="text-gray-100 font-bold text-lg">Time Limit:</span>
+                <span className="text-orange-400 font-black text-lg">{Math.ceil(testConfig.numQuestions * 1.5)} minutes</span>
               </div>
             </div>
           </div>
         </div>
       </div>
 
-      <div className="flex justify-between max-w-4xl mx-auto pt-8">
+      <div className="flex justify-between max-w-5xl mx-auto pt-8">
         <button
           onClick={() => setCurrentStep(3)}
-          className="flex items-center space-x-3 px-8 py-4 bg-gray-600 hover:bg-gray-700 text-white rounded-xl font-bold text-lg"
+          className="flex items-center space-x-3 px-8 py-4 bg-gray-700 hover:bg-gray-600 text-white rounded-2xl font-bold text-lg transition-all duration-200"
         >
           <ChevronLeft className="w-6 h-6" />
           <span>Back</span>
         </button>
         <button
           onClick={handleStartTest}
-          className="flex items-center space-x-4 px-12 py-6 bg-green-600 hover:bg-green-700 text-white rounded-xl font-black text-2xl shadow-2xl transform hover:scale-105"
+          className="flex items-center space-x-4 px-12 py-6 bg-gradient-to-r from-green-600 via-emerald-600 to-green-600 hover:from-green-700 hover:via-emerald-700 hover:to-green-700 text-white rounded-2xl font-black text-2xl shadow-2xl transform hover:scale-105 transition-all duration-200"
         >
           <Shield className="w-8 h-8" />
           <span>START SECURE TEST</span>
-          <Play className="w-8 h-8" />
+          <Rocket className="w-8 h-8" />
         </button>
       </div>
     </div>
   );
 
   return (
-    <div className="max-w-7xl mx-auto px-4 py-12">
+    <div className="max-w-7xl mx-auto px-6 py-12">
       {renderStepIndicator()}
       
       {currentStep === 1 && renderStreamSelection()}
@@ -1404,9 +1342,13 @@ const TestSelectionFlow = ({ onStartTest }) => {
   );
 };
 
+// Enhanced Test Results Component Import
+import TestResults from '../components/TestResults';
+import TestHistory from '../components/TestHistory';
+
 // Main TestSection Component
 const TestSection = () => {
-  const [currentView, setCurrentView] = useState('selection');
+  const [currentView, setCurrentView] = useState('selection'); // selection, test, result, history
   const [testData, setTestData] = useState(null);
   const [testResult, setTestResult] = useState(null);
   const navigate = useNavigate();
@@ -1427,30 +1369,90 @@ const TestSection = () => {
     setTestResult(null);
   };
 
+  const handleRetakeTest = () => {
+    if (testData) {
+      setCurrentView('test');
+      setTestResult(null);
+    } else {
+      handleBackToSelection();
+    }
+  };
+
+  const handleViewHistory = () => {
+    setCurrentView('history');
+  };
+
+  const handleViewTestResult = (testId) => {
+    console.log('View test result:', testId);
+  };
+
+  const handleRetakeFromHistory = (test) => {
+    const config = {
+      streamId: test.stream?._id,
+      subjectIds: test.subjects?.map(s => s._id) || [],
+      topicIds: test.topics?.map(t => t._id) || [],
+      numQuestions: test.totalQuestions,
+      difficulty: test.difficulty
+    };
+    handleStartTest(config);
+  };
+
   return (
-    <div className="min-h-screen bg-gray-900">
-      {currentView === 'selection' && (
-        <div className="bg-gray-800 border-b border-gray-700 sticky top-0 z-50">
-          <div className="max-w-7xl mx-auto px-4 py-3">
+    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-blue-900 to-gray-900 test-section-text">
+      {/* Enhanced Navigation Header */}
+      {(currentView === 'selection' || currentView === 'history') && (
+        <div className="bg-gray-800/95 backdrop-blur-xl border-b border-gray-700/50 sticky top-0 z-50">
+          <div className="max-w-7xl mx-auto px-6 py-4">
             <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-3">
+              <div className="flex items-center space-x-4">
                 <button
                   onClick={() => navigate('/')}
-                  className="p-2 text-gray-400 hover:text-white transition-colors rounded-lg hover:bg-gray-700"
+                  className="p-3 text-gray-400 hover:text-white hover:bg-gray-700 rounded-xl transition-all duration-200"
                 >
-                  <Home className="w-5 h-5" />
+                  <Home className="w-6 h-6" />
                 </button>
                 <div>
-                  <h1 className="text-xl font-bold text-white">Test Center</h1>
-                  <p className="text-gray-400 text-sm">Practice with real exam questions</p>
+                  <h1 className="text-2xl font-bold text-white bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
+                    Test Center
+                  </h1>
+                  <p className="text-gray-200 text-sm">Practice with real exam questions</p>
                 </div>
+              </div>
+
+              <div className="flex items-center space-x-2">
+                <button
+                  onClick={() => setCurrentView('selection')}
+                  className={`px-6 py-3 rounded-xl font-bold transition-all duration-200 ${
+                    currentView === 'selection'
+                      ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-lg'
+                      : 'text-gray-200 hover:text-white hover:bg-gray-700'
+                  }`}
+                >
+                  <div className="flex items-center space-x-2">
+                    <Plus className="w-5 h-5" />
+                    <span>New Test</span>
+                  </div>
+                </button>
+                <button
+                  onClick={handleViewHistory}
+                  className={`px-6 py-3 rounded-xl font-bold transition-all duration-200 ${
+                    currentView === 'history'
+                      ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-lg'
+                      : 'text-gray-200 hover:text-white hover:bg-gray-700'
+                  }`}
+                >
+                  <div className="flex items-center space-x-2">
+                    <Clock className="w-5 h-5" />
+                    <span>History</span>
+                  </div>
+                </button>
               </div>
             </div>
           </div>
         </div>
       )}
 
-      <div className={currentView === 'selection' ? 'py-8' : ''}>
+      <div className={(currentView === 'selection' || currentView === 'history') ? 'py-8' : ''}>
         {currentView === 'selection' && (
           <TestSelectionFlow onStartTest={handleStartTest} />
         )}
@@ -1464,24 +1466,19 @@ const TestSection = () => {
         )}
         
         {currentView === 'result' && testResult && (
-          <div className="max-w-4xl mx-auto px-4 py-8 text-center">
-            <h2 className="text-4xl font-black text-white mb-8">Test Results</h2>
-            <div className="bg-white p-10 rounded-2xl border-4 border-gray-600">
-              <p className="text-gray-900 font-bold mb-6 text-2xl">
-                Test completed successfully! 🎉
-              </p>
-              <div className="bg-gray-100 p-8 rounded-xl">
-                <pre className="text-gray-900 font-mono text-left text-sm overflow-auto">
-                  {JSON.stringify(testResult, null, 2)}
-                </pre>
-              </div>
-              <button
-                onClick={handleBackToSelection}
-                className="mt-6 px-8 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-bold"
-              >
-                Take Another Test
-              </button>
-            </div>
+          <TestResults 
+            testResult={testResult}
+            onBackToSelection={handleBackToSelection}
+            onRetakeTest={handleRetakeTest}
+          />
+        )}
+
+        {currentView === 'history' && (
+          <div className="-mt-8">
+            <TestHistory 
+              onViewResult={handleViewTestResult}
+              onRetakeTest={handleRetakeFromHistory}
+            />
           </div>
         )}
       </div>

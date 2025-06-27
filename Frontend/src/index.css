@@ -143,6 +143,17 @@ body {
   overflow: hidden;
 }
 
+/* Force light text colors for TestSection */
+.test-section-text * {
+  color: #f1f5f9 !important;
+}
+
+.test-section-text .text-gray-100,
+.test-section-text .text-gray-200,
+.test-section-text .text-white {
+  color: #f1f5f9 !important;
+}
+
 .line-clamp-3 {
   display: -webkit-box;
   -webkit-line-clamp: 3;

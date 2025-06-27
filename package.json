@@ -1,0 +1,43 @@
+{
+  "name": "mockint",
+  "version": "1.0.0",
+  "description": "Comprehensive online testing platform for competitive exam preparation",
+  "private": true,
+  "scripts": {
+    "dev": "concurrently \"npm run backend:dev\" \"npm run frontend:dev\"",
+    "backend:dev": "cd Backend && npm run dev",
+    "frontend:dev": "cd Frontend && npm run dev",
+    "backend:start": "cd Backend && npm start",
+    "frontend:build": "cd Frontend && npm run build",
+    "install:all": "npm install && cd Backend && npm install && cd ../Frontend && npm install",
+    "test": "cd Backend && npm test",
+    "test:frontend": "cd Frontend && npm test",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "seed": "cd Backend && node scripts/seedDatabase.js",
+    "setup": "npm run install:all && npm run seed"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2",
+    "eslint": "^8.56.0",
+    "eslint-plugin-react": "^7.33.2",
+    "eslint-plugin-react-hooks": "^4.6.0"
+  },
+  "engines": {
+    "node": ">=16.0.0",
+    "npm": ">=8.0.0"
+  },
+  "author": "MockInt Team",
+  "license": "MIT",
+  "keywords": [
+    "testing",
+    "examination",
+    "education",
+    "mock-test",
+    "JEE",
+    "CAT",
+    "NEET",
+    "GATE",
+    "UPSC"
+  ]
+}

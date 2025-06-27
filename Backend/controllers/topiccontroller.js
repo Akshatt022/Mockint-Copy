@@ -10,7 +10,6 @@ const getTopicsBySubject = async (req, res) => {
       isActive: true 
     })
     .populate('subject', 'name')
-    .populate('stream', 'name')
     .sort({ name: 1 });
     
     res.status(200).json(topics);
@@ -34,13 +33,12 @@ const getTopicsBySubjects = async (req, res) => {
       isActive: true 
     })
     .populate('subject', 'name')
-    .populate('stream', 'name')
     .sort({ name: 1 });
     
     res.status(200).json(topics);
   } catch (error) {
-    console.error('Error fetching topics:', error);
-    res.status(500).json({ error: 'Failed to fetch topics' });
+    console.error( error.message);
+    res.status(500).json({ message: error.message });
   }
 };
 
@@ -48,8 +46,7 @@ const getTopicsBySubjects = async (req, res) => {
 const getTopicById = async (req, res) => {
   try {
     const topic = await Topic.findById(req.params.id)
-      .populate('subject', 'name')
-      .populate('stream', 'name');
+      .populate('subject', 'name');
       
     if (!topic) {
       return res.status(404).json({ error: 'Topic not found' });
@@ -96,8 +93,7 @@ const createTopic = async (req, res) => {
     await topic.save();
     
     const populatedTopic = await Topic.findById(topic._id)
-      .populate('subject', 'name')
-      .populate('stream', 'name');
+      .populate('subject', 'name');
       
     res.status(201).json(populatedTopic);
   } catch (error) {
@@ -119,8 +115,7 @@ const updateTopic = async (req, res) => {
       req.body,
       { new: true, runValidators: true }
     )
-    .populate('subject', 'name')
-    .populate('stream', 'name');
+    .populate('subject', 'name');
 
     if (!topic) {
       return res.status(404).json({ error: 'Topic not found' });

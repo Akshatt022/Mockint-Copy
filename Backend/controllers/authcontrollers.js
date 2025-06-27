@@ -1,71 +1,94 @@
-const { User, validateUser } = require('../models/User'); // Assuming your User model exports validateUser for Joi
-const bcrypt = require('bcrypt');
-const jwt = require("jsonwebtoken");  
-const router = require('../routes/user');
+const { User, validateUser } = require('../models/User');
+const bcrypt = require('bcryptjs');
+const jwt = require("jsonwebtoken");
+const { sendSuccess, sendError, sendValidationError } = require('../utils/apiResponse');
+const { asyncHandler } = require('../middleware/errorHandler');
 
-const register = async (req, res) => {
+const register = asyncHandler(async (req, res) => {
   // 1. Validate request body with Joi
   const { error } = validateUser(req.body);
-  if (error) return res.status(400).json({ error: error.details[0].message });
+  if (error) return sendValidationError(res, error);
 
-  try {
-    // 2. Check if user already exists
-    const existingUser = await User.findOne({ email: req.body.email });
-    if (existingUser) return res.status(409).json({ error: "Email already registered" });
+  // 2. Check if user already exists
+  const existingUser = await User.findOne({ email: req.body.email });
+  if (existingUser) return sendError(res, "Email already registered", 409);
 
-    // 3. Hash password
-    const saltRounds = 10;
-    const hashedPassword = await bcrypt.hash(req.body.password, saltRounds);
+  // 3. Hash password
+  const saltRounds = 10;
+  const hashedPassword = await bcrypt.hash(req.body.password, saltRounds);
 
-    // 4. Create new user document
-    const user = new User({
-      name: req.body.name,
-      email: req.body.email,
-      password: hashedPassword,
-      phone: req.body.phone,
-      addresses: req.body.addresses
-    });
+  // 4. Create new user document
+  const user = new User({
+    name: req.body.name,
+    email: req.body.email,
+    password: hashedPassword,
+    phone: req.body.phone,
+    addresses: req.body.addresses
+  });
 
-    // 5. Save user to DB
-    await user.save();
+  // 5. Save user to DB
+  await user.save();
 
-    // 6. Respond success (you can exclude password in response)
-    res.status(201).json({ message: "User registered successfully" });
-  } catch (err) {
-    console.error("Registration error:", err);
-    res.status(500).json({ error: err.message });
+  // 6. Respond success (exclude password in response)
+  const userResponse = {
+    _id: user._id,
+    name: user.name,
+    email: user.email,
+    phone: user.phone
+  };
+
+  return sendSuccess(res, userResponse, "User registered successfully", 201);
+});
+
+const login = asyncHandler(async (req, res) => {
+  const { email, password } = req.body;
+  
+  if (!email || !password) {
+    return sendError(res, "Email and password are required", 400);
   }
-};
 
-const login = async (req, res) => {
-  try {
-    const { email, password } = req.body;
-    if (!email || !password)
-      return res.status(400).json({ error: "Email and password are required" });
-
-    const user = await User.findOne({ email });
-    if (!user) {
-    console.log("User not found");
-    return res.status(400).json({ message: 'Invalid email or password' });
-    } 
-
-    const validPass = await bcrypt.compare(password, user.password);
-    
-    if (!validPass)
-      return res.status(401).json({ error: "Invalid email or password" });
-
-    const token = jwt.sign(
-      { _id: user._id, email: user.email },
-      process.env.JWT_SECRET,
-      { expiresIn: "2h" }
-    );
-
-    res.status(200).json({ message: "Login successful", token });
-
-  } catch (err) {
-    console.error("Login error:", err);
-    res.status(500).json({ error: err.message });
+  const user = await User.findOne({ email });
+  if (!user) {
+    return sendError(res, "Invalid email or password", 401);
   }
-};
 
-module.exports = {register,login};
+  const validPass = await bcrypt.compare(password, user.password);
+  if (!validPass) {
+    return sendError(res, "Invalid email or password", 401);
+  }
+
+  const token = jwt.sign(
+    { id: user._id, email: user.email, role: 'user' },
+    process.env.JWT_SECRET,
+    { expiresIn: "2h" }
+  );
+
+  const userResponse = {
+    _id: user._id,
+    name: user.name,
+    email: user.email,
+    phone: user.phone
+  };
+
+  return sendSuccess(res, { user: userResponse, token }, "Login successful");
+});
+
+const verifyToken = asyncHandler(async (req, res) => {
+  // The authMiddleware already verified the token and attached user to req
+  const user = await User.findById(req.user.id).select('-password');
+  
+  if (!user) {
+    return sendError(res, 'User not found', 404);
+  }
+
+  const userResponse = {
+    _id: user._id,
+    name: user.name,
+    email: user.email,
+    phone: user.phone
+  };
+
+  return sendSuccess(res, { user: userResponse }, 'Token is valid');
+});
+
+module.exports = {register,login,verifyToken};

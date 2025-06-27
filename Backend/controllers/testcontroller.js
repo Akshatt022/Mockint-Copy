@@ -7,6 +7,8 @@ const { Topic } = require('../models/Topic');
 // Generate test based on user preferences
 const generateTest = async (req, res) => {
   try {
+    console.log('Test generation request received:', req.body);
+    
     const {
       streamId,
       subjectIds = [], // Array of subject IDs, empty means all subjects
@@ -45,6 +47,9 @@ const generateTest = async (req, res) => {
       query.difficulty = difficulty;
     }
 
+    console.log('Question query:', query);
+    console.log('Requested questions:', numQuestions, 'Difficulty:', difficulty);
+
     let questions;
 
     if (difficulty === 'Mixed') {
@@ -69,7 +74,10 @@ const generateTest = async (req, res) => {
       questions = shuffleArray(allQuestions).slice(0, numQuestions);
     }
 
+    console.log('Questions found:', questions.length);
+    
     if (questions.length === 0) {
+      console.log('No questions found for query:', query);
       return res.status(404).json({ 
         error: 'No questions found matching the criteria',
         suggestions: 'Try selecting different subjects, topics, or difficulty levels'
@@ -123,6 +131,9 @@ const generateTest = async (req, res) => {
 // Submit test and calculate results
 const submitTest = async (req, res) => {
   try {
+    console.log('Test submission request received:', req.body);
+    console.log('User from token:', req.user);
+    
     const {
       streamId,
       subjectIds = [],
@@ -188,7 +199,7 @@ const submitTest = async (req, res) => {
 
     // Save test result
     const testResult = new TestResult({
-      user: req.user._id,
+      user: req.user.id || req.user._id,
       stream: streamId,
       subjects: subjectIds,
       topics: topicIds,

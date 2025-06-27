@@ -2,9 +2,11 @@
 import React, { useState, useEffect } from "react";
 import { Eye, EyeOff, Mail, Lock, AlertCircle, CheckCircle, Loader, Shield, User } from "lucide-react";
 import { useNavigate, Link } from "react-router-dom";
+import { useAuth } from "../contexts/AuthContext";
 
-const Login = ({ setIsAuthenticated }) => {
+const Login = () => {
   const navigate = useNavigate();
+  const { login, isAuthenticated } = useAuth();
   const [formData, setFormData] = useState({
     email: "",
     password: "",
@@ -23,6 +25,13 @@ const Login = ({ setIsAuthenticated }) => {
       setFormData(prev => ({ ...prev, email: rememberedEmail, rememberMe: true }));
     }
   }, []);
+
+  // Redirect if already authenticated
+  useEffect(() => {
+    if (isAuthenticated) {
+      navigate('/', { replace: true });
+    }
+  }, [isAuthenticated, navigate]);
 
   const validateForm = () => {
     const newErrors = {};
@@ -75,21 +84,9 @@ const Login = ({ setIsAuthenticated }) => {
     setMessage("");
 
     try {
-      const res = await fetch("http://localhost:5000/auth/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ 
-          email: formData.email.trim().toLowerCase(), 
-          password: formData.password 
-        }),
-      });
-      
-      const data = await res.json();
+      const result = await login(formData.email.trim().toLowerCase(), formData.password);
 
-      if (res.ok) {
-        // Store token
-        localStorage.setItem("token", data.token);
-        
+      if (result.success) {
         // Handle remember me
         if (formData.rememberMe) {
           localStorage.setItem("rememberedEmail", formData.email);
@@ -97,20 +94,14 @@ const Login = ({ setIsAuthenticated }) => {
           localStorage.removeItem("rememberedEmail");
         }
 
-        // Store user data if available
-        if (data.user) {
-          localStorage.setItem("userData", JSON.stringify(data.user));
-        }
-
         setMessage("Login successful! Redirecting...");
-        setIsAuthenticated(true);
         setLoginAttempts(0); // Reset attempts on success
         
         setTimeout(() => {
           navigate('/', { replace: true });
         }, 1000);
       } else {
-        setMessage(data.error || data.message || "Login failed");
+        setMessage(result.error || "Login failed");
         setLoginAttempts(prev => prev + 1);
       }
     } catch (error) {

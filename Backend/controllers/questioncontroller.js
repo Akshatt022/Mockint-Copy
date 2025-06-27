@@ -6,17 +6,14 @@ const { Topic } = require('../models/Topic');
 // Get all questions with filters (Admin)
 const getAllQuestions = async (req, res) => {
   try {
-    const {
-      page = 1,
-      limit = 20,
-      streamId,
-      subjectId,
-      topicId,
-      difficulty,
-      search
-    } = req.query;
-
-    const skip = (parseInt(page) - 1) * parseInt(limit);
+    // Use validated pagination and filters from middleware if available
+    const { page, limit } = req.pagination || { 
+      page: parseInt(req.query.page) || 1, 
+      limit: parseInt(req.query.limit) || 20 
+    };
+    
+    const { streamId, subjectId, topicId, difficulty, search } = req.query;
+    const skip = (page - 1) * limit;
 
     // Build query
     let query = { isActive: true };

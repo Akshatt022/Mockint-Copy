@@ -1,9 +1,11 @@
 import React, { useState } from 'react';
 import { Eye, EyeOff, Shield, Lock, Mail, AlertCircle, CheckCircle } from 'lucide-react';
 import { useNavigate } from "react-router-dom";
+import { useAdmin } from '../contexts/AdminContext';
 
 const AdminLogin = () => {
   const navigate = useNavigate();
+  const { login } = useAdmin();
   const [formData, setFormData] = useState({
     email: '',
     password: ''
@@ -35,41 +37,22 @@ const AdminLogin = () => {
     setNotification({ type: '', message: '' });
     
     try {
-      // Replace with your actual API endpoint
-      const response = await fetch('http://localhost:5000/admin/login', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(formData),
-      });
+      const result = await login(formData.email, formData.password);
       
-      const data = await response.json();
-      
-      if (response.ok) {
-        // Store token in memory (you can also use a state management solution)
-        const adminData = {
-          token: data.token,
-          name: data.name,
-          loginTime: new Date().toISOString()
-        };
-        
+      if (result.success) {
         setNotification({
           type: 'success',
-          message: `Welcome back, ${data.name}! Login successful.`
+          message: `Welcome back, ${result.name}! Login successful.`
         });
         
-        // Simulate redirect or handle successful login
+        // Redirect to admin dashboard
         setTimeout(() => {
           navigate('/admin/dashboard');
-          console.log('Redirecting to admin dashboard...', adminData);
-          // You would typically redirect here: window.location.href = '/admin/dashboard';
         }, 1500);
-        
       } else {
         setNotification({
           type: 'error',
-          message: data.error || 'Login failed. Please try again.'
+          message: result.error || 'Login failed. Please try again.'
         });
       }
     } catch (error) {

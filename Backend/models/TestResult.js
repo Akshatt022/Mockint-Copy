@@ -85,6 +85,37 @@ const TestResultSchema = new mongoose.Schema({
   }
 }, { timestamps: true });
 
+// Data integrity validations
+TestResultSchema.pre('save', function(next) {
+  // Validate that answeredQuestions = correctAnswers + wrongAnswers
+  if (this.answeredQuestions !== (this.correctAnswers + this.wrongAnswers)) {
+    return next(new Error('answeredQuestions must equal correctAnswers + wrongAnswers'));
+  }
+  
+  // Validate that endTime > startTime
+  if (this.endTime <= this.startTime) {
+    return next(new Error('endTime must be after startTime'));
+  }
+  
+  // Validate percentage calculation
+  const calculatedPercentage = this.totalQuestions > 0 
+    ? Math.round((this.correctAnswers / this.totalQuestions) * 100) 
+    : 0;
+  
+  if (Math.abs(this.percentage - calculatedPercentage) > 1) {
+    return next(new Error('percentage calculation is incorrect'));
+  }
+  
+  next();
+});
+
+// Indexes for performance
+TestResultSchema.index({ user: 1, createdAt: -1 });
+TestResultSchema.index({ stream: 1 });
+TestResultSchema.index({ subject: 1 });
+TestResultSchema.index({ startTime: 1 });
+TestResultSchema.index({ completionTime: 1 });
+
 const testResultJoiSchema = Joi.object({
   user: Joi.string().required(),
   stream: Joi.string().required(),
