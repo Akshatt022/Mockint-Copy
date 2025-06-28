@@ -4,6 +4,7 @@ import {
   CheckCircle, Circle, Home, RotateCcw, Send, Loader,
   ArrowLeft, ArrowRight, Timer, BookOpen, Target
 } from 'lucide-react';
+import API_BASE_URL from '../config/api';
 
 const TestInterface = ({ testConfig, onTestComplete, onBackToSelection }) => {
   // Test state
@@ -19,7 +20,6 @@ const TestInterface = ({ testConfig, onTestComplete, onBackToSelection }) => {
   const [submitting, setSubmitting] = useState(false);
 
   const timerRef = useRef(null);
-  const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000';
 
   // Fetch questions when component mounts
   useEffect(() => {
@@ -50,7 +50,7 @@ const TestInterface = ({ testConfig, onTestComplete, onBackToSelection }) => {
       console.log('🔄 Generating test with config:', testConfig);
 
       const token = localStorage.getItem('token');
-      const response = await fetch(`${API_BASE}/tests/generate`, {
+      const response = await fetch(`${API_BASE_URL}/api/tests/generate`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -193,7 +193,7 @@ const TestInterface = ({ testConfig, onTestComplete, onBackToSelection }) => {
       console.log('📤 Submitting test:', submitData);
 
       const token = localStorage.getItem('token');
-      const response = await fetch(`${API_BASE}/tests/submit`, {
+      const response = await fetch(`${API_BASE_URL}/api/tests/submit`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

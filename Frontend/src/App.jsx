@@ -11,6 +11,7 @@ import { ThemeProvider } from './contexts/ThemeContext';
 import { AuthProvider } from './contexts/AuthContext';
 import { AdminProvider } from './contexts/AdminContext';
 import ProtectedRoute from './components/ProtectedRoute';
+import AdminProtectedRoute from './components/AdminProtectedRoute';
 import { FEATURES } from './config/environment';
 
 function App() {
@@ -28,7 +29,11 @@ function App() {
             />
             <Route
               path="/admin/dashboard"
-              element={AdminPanel ? <AdminDashboard/> : <Navigate to="/login" />}
+              element={AdminPanel ? (
+                <AdminProtectedRoute>
+                  <AdminDashboard/>
+                </AdminProtectedRoute>
+              ) : <Navigate to="/login" />}
             />
             <Route
               path="/"

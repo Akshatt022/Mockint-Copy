@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import {Icon, Plus, Edit2, Trash2, Filter, Search, BookOpen, FileText, HelpCircle } from 'lucide-react';
+import API_BASE_URL from '../config/api';
 
 const AdminDashboard = () => {
   // State management
@@ -35,9 +36,6 @@ const AdminDashboard = () => {
     }
   ]);
 
-  // API Base URL
-  const API_BASE = 'http://localhost:5000/api';
-
   // API helper functions
   const handleApiError = (error) => {
     console.error('API Error:', error);
@@ -49,7 +47,7 @@ const AdminDashboard = () => {
   const fetchStreams = async () => {
     try {
       setLoading(true);
-      const response = await fetch(`${API_BASE}/streams`);
+      const response = await fetch(`${API_BASE_URL}/api/streams`);
       if (!response.ok) throw new Error('Failed to fetch streams');
       const data = await response.json();
       setStreams(data);
@@ -63,7 +61,7 @@ const AdminDashboard = () => {
   const fetchTopics = async () => {
     try {
       setLoading(true);
-      const response = await fetch(`${API_BASE}/topics`);
+      const response = await fetch(`${API_BASE_URL}/api/topics`);
       if (!response.ok) throw new Error('Failed to fetch topics');
       const data = await response.json();
       setTopics(data);
@@ -119,7 +117,7 @@ const AdminDashboard = () => {
     setLoading(true);
     setError('');
     
-    const response = await fetch(`${API_BASE}/streams`, {
+    const response = await fetch(`${API_BASE_URL}/api/streams`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -231,7 +229,7 @@ const validateStreamForm = (form) => {
       try {
         setLoading(true);
         const selectedStream = streams.find(s => s.id === parseInt(topicForm.streamId));
-        const response = await fetch(`${API_BASE}/topics`, {
+        const response = await fetch(`${API_BASE_URL}/api/topics`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -264,7 +262,7 @@ const validateStreamForm = (form) => {
     try {
       setLoading(true);
       const selectedStream = streams.find(s => s.id === parseInt(topicForm.streamId));
-      const response = await fetch(`${API_BASE}/topics/${editingTopic.id}`, {
+      const response = await fetch(`${API_BASE_URL}/api/topics/${editingTopic.id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -298,7 +296,7 @@ const validateStreamForm = (form) => {
     if (window.confirm('Are you sure you want to delete this topic? This will also delete all associated questions.')) {
       try {
         setLoading(true);
-        const response = await fetch(`${API_BASE}/topics/${id}`, {
+        const response = await fetch(`${API_BASE_URL}/api/topics/${id}`, {
           method: 'DELETE'
         });
         

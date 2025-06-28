@@ -49,7 +49,7 @@ const features = [
 
 const FeaturesSection = () => {
   return (
-    <section className="relative py-24 bg-gradient-to-b from-slate-900 to-slate-800">
+    <section className="relative py-24 bg-gradient-to-b from-slate-900 to-slate-800 dark">
       {/* Enhanced Background Pattern */}
       <div className="absolute inset-0 opacity-5">
         <div className="absolute inset-0" style={{
@@ -64,20 +64,21 @@ const FeaturesSection = () => {
       </div>
 
       <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+
         {/* Enhanced Section Header */}
-        <div className="text-center mb-16">
+        <div className="text-center justify-center mb-16">
           <div className="inline-flex items-center space-x-2 bg-emerald-500/20 border border-emerald-400/30 rounded-full px-6 py-3 mb-8 backdrop-blur-sm">
             <Zap className="w-5 h-5 text-emerald-300" />
-            <span className="text-emerald-200 text-sm font-semibold">Powerful Features</span>
+            <span className="text-emerald-300 text-sm font-semibold">Powerful Features</span>
           </div>
-          
-          <h2 className="text-4xl lg:text-6xl font-bold mb-8">
+          <h2 className="text-3xl sm:text-4xl lg:text-6xl font-bold mb-6 sm:mb-8">
             <span className="text-white">Why Choose </span>
             <span className="bg-gradient-to-r from-emerald-300 to-teal-300 bg-clip-text text-transparent">Mockint?</span>
           </h2>
-          <p className="text-xl text-slate-200 max-w-3xl mx-auto leading-relaxed font-medium">
-            Experience the next generation of exam preparation with AI-powered insights, 
+          <p className="text-lg sm:text-xl text-center text-gray-200 max-w-3xl mx-auto leading-relaxed font-medium px-4 sm:px-0">
+            Experience the next generation of exam preparation with AI-powered insights,
             personalized learning paths, and comprehensive analytics.
+           
           </p>
         </div>
 
@@ -110,7 +111,7 @@ const FeaturesSection = () => {
                       </span>
                     </div>
                     
-                    <p className="text-slate-100 leading-relaxed font-medium text-base">
+                    <p className="text-gray-300 leading-relaxed font-medium text-base">
                       {feature.description}
                     </p>
                   </div>
@@ -127,7 +128,7 @@ const FeaturesSection = () => {
         <div className="text-center mt-20">
           <div className="inline-flex items-center space-x-3 text-slate-200 bg-white/5 backdrop-blur-sm border border-white/10 rounded-full px-6 py-3">
             <Award className="w-6 h-6 text-emerald-400" />
-            <span className="font-semibold text-lg">Trusted by 50,000+ students across India</span>
+            <span className="font-semibold text-lg text-gray-200">Trusted by 50,000+ students across India</span>
           </div>
         </div>
       </div>

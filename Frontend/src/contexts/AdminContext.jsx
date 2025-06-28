@@ -60,18 +60,28 @@ export const AdminProvider = ({ children }) => {
 
   const login = async (email, password) => {
     try {
-      const response = await fetch('http://localhost:5000/admin/login', {
+      const response = await fetch('http://localhost:5001/admin/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password })
       });
 
-      const data = await response.json();
+      // Check if response is JSON
+      const contentType = response.headers.get("content-type");
+      let data;
+      
+      if (contentType && contentType.indexOf("application/json") !== -1) {
+        data = await response.json();
+      } else {
+        // Handle non-JSON response (like rate limit messages)
+        const text = await response.text();
+        data = { message: text };
+      }
 
-      if (response.ok) {
+      if (response.ok && data.token) {
         localStorage.setItem('adminToken', data.token);
         localStorage.setItem('adminData', JSON.stringify({
-          name: data.name,
+          name: data.admin?.name || data.name,
           email: email
         }));
         
@@ -79,15 +89,15 @@ export const AdminProvider = ({ children }) => {
         const payload = JSON.parse(atob(data.token.split('.')[1]));
         setAdmin({
           id: payload.id,
-          email: payload.email,
-          name: data.name,
+          email: email,
+          name: data.admin?.name || data.name,
           role: payload.role
         });
         setIsAuthenticated(true);
         
-        return { success: true, name: data.name };
+        return { success: true, name: data.admin?.name || data.name };
       } else {
-        return { success: false, error: data.error || data.message };
+        return { success: false, error: data.error || data.message || 'Login failed' };
       }
     } catch (error) {
       console.error('Admin login error:', error);

@@ -43,7 +43,29 @@ const UserSchema = new mongoose.Schema({
       }
     }
   ],
-  // testsTaken removed - use TestResult collection for test history
+  // Admin management fields
+  isActive: {
+    type: Boolean,
+    default: true
+  },
+  isBlocked: {
+    type: Boolean,
+    default: false
+  },
+  lastLogin: {
+    type: Date
+  },
+  loginAttempts: {
+    type: Number,
+    default: 0
+  },
+  lockoutUntil: {
+    type: Date
+  },
+  completedTopics: [{
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Topic'
+  }]
 }, { timestamps: true });
 
 // Indexes for performance

@@ -4,6 +4,7 @@ import {
   ChevronLeft, ChevronRight, BarChart3, Filter, Download,
   CheckCircle, XCircle, Eye, Loader, AlertCircle, RefreshCw
 } from 'lucide-react';
+import API_BASE_URL from '../config/api';
 
 const TestHistory = ({ onViewResult, onRetakeTest }) => {
   const [testHistory, setTestHistory] = useState([]);
@@ -13,8 +14,6 @@ const TestHistory = ({ onViewResult, onRetakeTest }) => {
   const [totalPages, setTotalPages] = useState(1);
   const [filter, setFilter] = useState('all'); // all, recent, high-score, low-score
   const [sortBy, setSortBy] = useState('recent'); // recent, score, duration
-
-  const API_BASE = 'http://localhost:5000/api';
 
   useEffect(() => {
     fetchTestHistory();
@@ -26,7 +25,7 @@ const TestHistory = ({ onViewResult, onRetakeTest }) => {
       setError('');
 
       const token = localStorage.getItem('token');
-      const response = await fetch(`${API_BASE}/tests/history?page=${currentPage}&limit=10`, {
+      const response = await fetch(`${API_BASE_URL}/api/tests/history?page=${currentPage}&limit=10`, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'

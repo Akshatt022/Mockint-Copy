@@ -25,7 +25,7 @@ const HeroSection = () => {
 
             {/* Main Headline */}
             <div className="space-y-4">
-              <h1 className="text-5xl lg:text-7xl font-bold leading-tight">
+              <h1 className="text-4xl sm:text-5xl lg:text-7xl font-bold leading-tight">
                 <span className="text-white">Prepare</span>
                 <br />
                 <span className="bg-gradient-to-r from-emerald-400 via-teal-400 to-cyan-400 bg-clip-text text-transparent">Smarter</span>
@@ -33,16 +33,16 @@ const HeroSection = () => {
                 <span className="text-white">with</span>
                 <span className="text-emerald-400"> Mockint</span>
               </h1>
-              <p className="text-xl text-slate-300 leading-relaxed max-w-lg">
+              <p className="text-lg sm:text-xl text-slate-300 leading-relaxed max-w-lg">
                 AI-powered mock tests for JEE, NEET, GATE & more. Get personalized practice, instant analytics, and ace your competitive exams.
               </p>
             </div>
 
             {/* Stats */}
-            <div className="flex items-center space-x-8">
+            <div className="flex items-center space-x-4 sm:space-x-8">
               <div className="text-center">
-                <div className="text-2xl font-bold text-white">50K+</div>
-                <div className="text-sm text-slate-400">Students</div>
+                <div className="text-xl sm:text-2xl font-bold text-white">50K+</div>
+                <div className="text-xs sm:text-sm text-slate-400">Students</div>
               </div>
               <div className="text-center">
                 <div className="text-2xl font-bold text-white">1M+</div>
@@ -58,20 +58,20 @@ const HeroSection = () => {
             <div className="flex flex-col sm:flex-row items-start space-y-4 sm:space-y-0 sm:space-x-4">
               <Link
                 to="/testSection"
-                className="group inline-flex items-center space-x-2 bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white px-8 py-4 rounded-xl font-semibold transition-all duration-300 transform hover:scale-105 hover:shadow-lg hover:shadow-emerald-500/25"
+                className="group inline-flex items-center justify-center space-x-2 bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white px-6 sm:px-8 py-3 sm:py-4 rounded-xl font-semibold transition-all duration-300 transform hover:scale-105 hover:shadow-lg hover:shadow-emerald-500/25 w-full sm:w-auto"
               >
                 <span>Start Free Test</span>
                 <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform duration-200" />
               </Link>
               
-              <button className="group inline-flex items-center space-x-2 bg-slate-800/50 hover:bg-slate-700/50 border border-slate-600 text-white px-8 py-4 rounded-xl font-semibold transition-all duration-300">
+              <button className="group inline-flex items-center justify-center space-x-2 bg-slate-800/50 hover:bg-slate-700/50 border border-slate-600 text-white px-6 sm:px-8 py-3 sm:py-4 rounded-xl font-semibold transition-all duration-300 w-full sm:w-auto">
                 <Play className="w-5 h-5 group-hover:scale-110 transition-transform duration-200" />
                 <span>Watch Demo</span>
               </button>
             </div>
 
             {/* Trust Indicators */}
-            <div className="flex items-center space-x-6 pt-8 border-t border-slate-700">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center space-y-4 sm:space-y-0 sm:space-x-6 pt-8 border-t border-slate-700">
               <div className="flex items-center space-x-2">
                 <Users className="w-5 h-5 text-emerald-400" />
                 <span className="text-slate-300 text-sm">Trusted by IIT/NIT Students</span>
@@ -84,7 +84,7 @@ const HeroSection = () => {
           </div>
 
           {/* Right Content - Enhanced Illustration */}
-          <div className="relative lg:h-[600px] flex items-center justify-center">
+          <div className="relative lg:h-[600px] flex items-center justify-center mt-12 lg:mt-0">
             <div className="relative">
               {/* Main Image - SINGLE IMAGE ONLY */}
               <div className="relative z-10">
@@ -96,7 +96,7 @@ const HeroSection = () => {
               </div>
 
               {/* Floating Cards */}
-              <div className="absolute top-10 -left-10 bg-gradient-to-br from-emerald-500 to-teal-600 p-4 rounded-xl shadow-lg animate-float" style={{animationDelay: '1s'}}>
+              <div className="absolute top-10 -left-10 bg-gradient-to-br from-emerald-500 to-teal-600 p-3 sm:p-4 rounded-xl shadow-lg animate-float hidden sm:block" style={{animationDelay: '1s'}}>
                 <div className="text-white text-center">
                   <BookOpen className="w-6 h-6 mx-auto mb-2" />
                   <div className="text-xs font-semibold">10,000+</div>
@@ -104,7 +104,7 @@ const HeroSection = () => {
                 </div>
               </div>
 
-              <div className="absolute bottom-20 -right-10 bg-gradient-to-br from-purple-500 to-indigo-600 p-4 rounded-xl shadow-lg animate-float" style={{animationDelay: '3s'}}>
+              <div className="absolute bottom-20 -right-10 bg-gradient-to-br from-purple-500 to-indigo-600 p-3 sm:p-4 rounded-xl shadow-lg animate-float hidden sm:block" style={{animationDelay: '3s'}}>
                 <div className="text-white text-center">
                   <Award className="w-6 h-6 mx-auto mb-2" />
                   <div className="text-xs font-semibold">AI Powered</div>
@@ -112,7 +112,7 @@ const HeroSection = () => {
                 </div>
               </div>
 
-              <div className="absolute top-1/2 -right-20 bg-gradient-to-br from-amber-500 to-orange-600 p-4 rounded-xl shadow-lg animate-float" style={{animationDelay: '5s'}}>
+              <div className="absolute top-1/2 -right-20 bg-gradient-to-br from-amber-500 to-orange-600 p-3 sm:p-4 rounded-xl shadow-lg animate-float hidden md:block" style={{animationDelay: '5s'}}>
                 <div className="text-white text-center">
                   <Star className="w-6 h-6 mx-auto mb-2" fill="currentColor" />
                   <div className="text-xs font-semibold">4.9★</div>

@@ -106,10 +106,10 @@ const TestimonialsSection = () => {
             <span className="text-emerald-400 text-sm font-medium">Student Success Stories</span>
           </div>
           
-          <h2 className="text-4xl lg:text-5xl font-bold text-white mb-6">
+          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-white mb-6">
             What Our <span className="bg-gradient-to-r from-emerald-400 to-teal-400 bg-clip-text text-transparent">Students Say</span>
           </h2>
-          <p className="text-xl text-slate-300 max-w-3xl mx-auto leading-relaxed">
+          <p className="text-lg sm:text-xl text-slate-300 max-w-3xl mx-auto leading-relaxed px-4 sm:px-0">
             Real feedback from students who transformed their exam preparation and achieved their dreams with Mockint.
           </p>
         </div>
@@ -117,7 +117,7 @@ const TestimonialsSection = () => {
         {/* Stats Banner */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mb-16">
           <div className="text-center">
-            <div className="text-3xl font-bold text-white mb-2">50K+</div>
+            <div className="text-2xl sm:text-3xl font-bold text-white mb-2">50K+</div>
             <div className="text-slate-400 text-sm">Happy Students</div>
           </div>
           <div className="text-center">
@@ -148,7 +148,7 @@ const TestimonialsSection = () => {
 
               {/* Content */}
               <div className="flex-1 text-center lg:text-left">
-                <p className="text-xl md:text-2xl text-slate-200 leading-relaxed mb-6 italic">
+                <p className="text-lg sm:text-xl md:text-2xl text-slate-200 leading-relaxed mb-6 italic">
                   "{testimonials[currentIndex].quote}"
                 </p>
                 
@@ -168,7 +168,7 @@ const TestimonialsSection = () => {
                   </div>
 
                   {/* Achievement Stats */}
-                  <div className="flex items-center gap-6">
+                  <div className="flex flex-wrap items-center gap-4 sm:gap-6 justify-center lg:justify-start">
                     <div className="text-center">
                       <div className="text-sm text-slate-400">Score</div>
                       <div className="text-lg font-bold text-white">{testimonials[currentIndex].examScore}</div>

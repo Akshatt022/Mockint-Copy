@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import API_BASE_URL from '../config/api';
 
 const useStreams = () => {
   const [streams, setStreams] = useState([]);
@@ -8,7 +9,7 @@ const useStreams = () => {
   useEffect(() => {
     const getStreams = async () => {
       try {
-        const response = await fetch('http://localhost:5000/api/streams');
+        const response = await fetch(`${API_BASE_URL}/api/streams`);
         if (!response.ok) {
           throw new Error('Failed to fetch streams');
         }

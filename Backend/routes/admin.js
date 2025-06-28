@@ -1,50 +1,60 @@
 const express = require("express");
 const router = express.Router();
-const bcrypt = require("bcryptjs");
-const jwt = require("jsonwebtoken");
-const { adminModel } = require("../models/admin");
-require("dotenv").config();
+const adminController = require('../controllers/admincontroller');
+const adminMiddleware = require('../middleware/adminMiddleware');
 
-// Development-only route to create a default admin
-if (process.env.NODE_ENV === "development") {
-  router.get("/create", async (req, res) => {
-    try {
-      const existingAdmin = await adminModel.findOne({ email: process.env.ADMIN_EMAIL || "admin@mockint.com" });
-      if (existingAdmin) return res.status(400).send("Admin already exists.");
+// Public admin routes (no authentication required)
+router.post('/login', adminController.adminLogin);
 
-      const hash = await bcrypt.hash(process.env.ADMIN_PASSWORD || "SecureAdminPassword123!", 10);
-      const admin = new adminModel({
-        name: "System Administrator",
-        email: process.env.ADMIN_EMAIL || "admin@mockint.com",
-        password: hash,
-        role: "superadmin",
-      });
+// Protected admin routes (require authentication)
+// Dashboard
+router.get('/dashboard/stats', adminMiddleware, adminController.getDashboardStats);
 
-      await admin.save();
-      const token = jwt.sign({ id: admin._id, email: admin.email, role: 'admin' }, process.env.JWT_SECRET, { expiresIn: "2h" });
-      res.cookie("token", token);
-      res.send("Admin Created Successfully");
-    } catch (err) {
-      console.error(err);
-      res.status(500).send("Internal Server Error");
-    }
-  });
-}
+// User Management
+router.get('/users', adminMiddleware, adminController.getAllUsers);
+router.get('/users/:id', adminMiddleware, adminController.getUserById);
+router.put('/users/:id', adminMiddleware, adminController.updateUser);
+router.delete('/users/:id', adminMiddleware, adminController.deleteUser);
 
-// Admin login view
-router.post("/login", async (req, res) => {
-  const { email, password } = req.body;
-  const admin = await adminModel.findOne({ email });
-  if (!admin) return res.status(400).json({ error: "Admin not found" });
+// Analytics
+router.get('/analytics', adminMiddleware, adminController.getAnalytics);
 
-  const valid = await bcrypt.compare(password, admin.password);
-  if (!valid) return res.status(401).json({ error: "Invalid password" });
+// System Settings
+router.get('/settings', adminMiddleware, adminController.getSystemSettings);
+router.put('/settings', adminMiddleware, adminController.updateSystemSettings);
 
-  const token = jwt.sign({ id: admin._id, email: admin.email, role: 'admin' }, process.env.JWT_SECRET, { expiresIn: "2h" });
-  res.status(200).json({ message: "Admin login successful", token, name: admin.name });
-});
+// Stream Management
+router.get('/streams', adminMiddleware, adminController.getAllStreams);
+router.post('/streams', adminMiddleware, adminController.createStream);
+router.put('/streams/:id', adminMiddleware, adminController.updateStream);
+router.delete('/streams/:id', adminMiddleware, adminController.deleteStream);
 
+// Subject Management
+router.get('/subjects/stream/:streamId', adminMiddleware, adminController.getSubjectsByStream);
+router.post('/subjects', adminMiddleware, adminController.createSubject);
+router.put('/subjects/:id', adminMiddleware, adminController.updateSubject);
+router.delete('/subjects/:id', adminMiddleware, adminController.deleteSubject);
 
+// Topic Management
+router.get('/topics/subject/:subjectId', adminMiddleware, adminController.getTopicsBySubject);
+router.post('/topics', adminMiddleware, adminController.createTopic);
+router.put('/topics/:id', adminMiddleware, adminController.updateTopic);
+router.delete('/topics/:id', adminMiddleware, adminController.deleteTopic);
 
+// Question Management
+router.get('/questions/topic/:topicId', adminMiddleware, adminController.getQuestionsByTopic);
+router.post('/questions', adminMiddleware, adminController.createQuestion);
+router.put('/questions/:id', adminMiddleware, adminController.updateQuestion);
+router.delete('/questions/:id', adminMiddleware, adminController.deleteQuestion);
+
+// Advanced Operations
+router.post('/questions/:id/duplicate', adminMiddleware, adminController.duplicateQuestion);
+router.post('/topics/:id/duplicate', adminMiddleware, adminController.duplicateTopic);
+router.put('/topics/:id/move', adminMiddleware, adminController.moveTopic);
+router.put('/questions/:id/move', adminMiddleware, adminController.moveQuestion);
+router.post('/questions/bulk-delete', adminMiddleware, adminController.bulkDeleteQuestions);
+router.put('/questions/bulk-update', adminMiddleware, adminController.bulkUpdateQuestions);
+router.get('/questions/export', adminMiddleware, adminController.exportQuestions);
+router.post('/questions/import', adminMiddleware, adminController.importQuestions);
 
 module.exports = router;

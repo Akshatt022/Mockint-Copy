@@ -1,0 +1,60 @@
+services:
+  # Backend API Service
+  - type: web
+    name: mockint-backend
+    runtime: node
+    buildCommand: cd Backend && npm install
+    startCommand: cd Backend && npm start
+    plan: free
+    region: oregon
+    branch: main
+    rootDir: ./
+    env:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 5000
+    envVars:
+      - key: MONGOURI
+        sync: false
+      - key: JWT_SECRET
+        generateValue: true
+      - key: FRONTEND_URL
+        sync: false
+    healthCheckPath: /api/health
+    autoDeploy: true
+
+  # Frontend Static Site
+  - type: static
+    name: mockint-frontend
+    buildCommand: cd Frontend && npm install && npm run build
+    publishDir: ./Frontend/dist
+    plan: free
+    region: oregon
+    branch: main
+    rootDir: ./
+    pullRequestPreviewsEnabled: false
+    buildFilter:
+      paths:
+        - Frontend/**
+    envVars:
+      - key: VITE_API_URL
+        sync: false
+      - key: VITE_APP_NAME
+        value: MockInt
+      - key: VITE_APP_VERSION
+        value: "1.0.0"
+    headers:
+      - path: "/*"
+        name: X-Frame-Options
+        value: SAMEORIGIN
+      - path: "/*"
+        name: X-Content-Type-Options
+        value: nosniff
+      - path: "/*"
+        name: X-XSS-Protection
+        value: "1; mode=block"
+    redirects:
+      - source: "/*"
+        destination: "/index.html"
+        type: rewrite

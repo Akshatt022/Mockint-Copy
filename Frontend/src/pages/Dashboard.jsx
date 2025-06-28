@@ -11,12 +11,14 @@ import FeaturesSection from '../components/FeaturesSection.jsx';
 const Dashboard = () => {
 
   return (
-    <div className="bg-[#0a0a0a] min-h-screen text-[#eee] font-[Poppins]">  
+    <div className="bg-dark-950 min-h-screen text-gray-100 font-poppins overflow-x-hidden">  
       <Navbar />
-      <HeroSection />
-      <FeaturesSection />
-      <TestimonialsSection />
-      <CallToActionSection/>
+      <main className="relative">
+        <HeroSection />
+        <FeaturesSection />
+        <TestimonialsSection />
+        <CallToActionSection/>
+      </main>
       <Footer />
     </div>
   );
